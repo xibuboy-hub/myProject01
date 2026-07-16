@@ -1,0 +1,176 @@
+{% extends 'layout.html' %}
+{% block title %}GSA Search{% endblock %}
+{% block content %}
+<h3 class="container panel-heading">GSA Search</h3>
+<script src="{{ url_for('static',filename='js/xlsx.full.min.js')}}"></script>
+<script src="{{ url_for('static',filename='js/FileSaver.min.js')}}"></script>
+<style>
+    .container {
+        width: 70%;
+        margin: 0 auto;
+    }
+
+    table {
+        margin-top: 10px;
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Verdana !important;
+        font-size: 12px;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    tr:nth-child(odd) {
+        background-color: #E7E7FF;
+        color: Blue;
+    }
+
+    tr:nth-child(even) {
+        background-color: #F7F7F7;
+        color: Blue;
+    }
+
+    th {
+        color: #FFFFFF;
+        background-color: rgb(100, 149, 237);
+        font-weight: bold;
+
+    }
+
+    th,
+    td {
+        /*border-bottom: 1px solid #ccc0c0;*/
+        height: 30px;
+        text-align: center;
+        padding: 3px;
+
+    }
+
+    p {
+        padding: 0;
+        margin: 0;
+    }
+
+    label {
+        font-weight: 700;
+        padding: 5px 0;
+        /*font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;*/
+    }
+
+    textarea {
+        width: 100%;
+        height: 15vh;
+    }
+
+    input {
+        font-size: 12px;
+        font-weight: 900 !important;
+    }
+</style>
+<div class="container">
+    <label for="txt">CARTON_NO:</label>
+    <textarea id="txt"></textarea>
+    <p><input type="button" id="search" value="Query" onclick="btn()">
+        <input type="button" id="export" value="ToExcel" onclick="exportTableToExcel();">
+    </p>
+    <span id="hs" style="text-align: right;font-size: small;font-weight:bold;float: right;"></span>
+    <table id="tableToExport">
+        <thead>
+            <tr>
+                <th>NO.</th>
+                <th>MODEL_NAME</th>
+                <th>SERIAL_NUMBER</th>
+                <th>LINE</th>
+                <th>CARTON_NO</th>
+            </tr>
+        </thead>
+        <tbody id="tbody">
+        </tbody>
+    </table>
+</div>
+<script>
+    const tbody = document.getElementById('tbody')
+    const search_btn = document.getElementById('search')
+
+    // 渲染表格函数
+    function render(data) {
+        let num = 0
+        data.forEach((e) => {
+            e.forEach((ee) => {
+                const tr = document.createElement('tr')
+                num++;
+                tr.innerHTML = `<td>${num}</td><td>${ee.model}</td><td>${ee.sn}</td><td>${ee.line}</td><td>${ee.box_id}</td>`
+                tbody.appendChild(tr)
+            })
+        })
+        return num;
+    }
+
+    // 查询按钮事件
+    function btn() {
+        search_btn.value = 'Querying'
+        $('input')[0].disabled = true
+        tbody.innerHTML = ''
+        let s = Date.now()
+        fetch('{{url_for("other.gsa")}}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 'req_data': document.querySelector('textarea').value.split('\n') })
+        }).then(res => {
+            return res.json()
+        }).then((data) => {
+            search_btn.value = 'Query'
+            $('input')[0].disabled = false
+            let e = Date.now()
+            render(data)
+            $('#hs')[0].innerText = '查询到记录' + $("table tbody tr").length + '条，总耗时' + (e - s) / 1000 + '秒';
+        }).catch((error) => {
+            search_btn.value = 'Query'
+            $('input')[0].disabled = false
+            console.log(error.message)
+            alert('查询失败，请重试。')
+        })
+    }
+
+    // 导出数据到excel
+    function exportTableToExcel() {
+        // 获取表格元素
+        const table = document.getElementById('tableToExport');
+        const wb = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
+        const ws = wb.Sheets['Sheet1']
+        setCellFormatAsText(ws, 2)
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+
+        function s2ab(s) {
+            const buf = new ArrayBuffer(s.length); //convert s to arrayBuffer
+            const view = new Uint8Array(buf);  //create uint8 array as viewer
+            for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF; //convert to octet
+            return buf;
+        }
+
+        let date = new Date()
+        let formattedDate = date.getFullYear().toString() +
+                    ('0' + (date.getMonth() + 1)).slice(-2) + // 月份加1因为月份是从0开始的
+                    ('0' + date.getDate()).slice(-2) + '_' +
+                    ('0' + date.getHours()).slice(-2) +
+                    ('0' + date.getMinutes()).slice(-2) +
+                    ('0' + date.getSeconds()).slice(-2);
+        saveAs(new Blob([s2ab(wbout)], { type: "application/octet-stream" }), `gsa_data_${formattedDate}.xlsx`); //使用FileSaver.js保存文件
+    }
+
+    // 修改某一列为文本格式
+    function setCellFormatAsText(ws, col) {
+        var range = XLSX.utils.decode_range(ws['!ref']); // 获取工作表的范围
+        for (var R = range.s.r; R <= range.e.r; ++R) { // 遍历行
+            var cell_address = { c: col, r: R }; // 设置列和行
+            var cell_reference = XLSX.utils.encode_cell(cell_address); // 编码单元格地址
+            if (!ws[cell_reference]) continue; // 如果单元格不存在，则跳过
+            ws[cell_reference].t = 's'; // 设置单元格类型为字符串（文本）
+            ws[cell_reference].z = '@'; // 设置单元格格式为文本（可选）
+        }
+    }
+
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>demo</title>
+    <style>
+        .container {
+
+            width: 27%;
+            margin: 100px auto;
+            border: 1px solid rgba(234, 173, 173, 0.604);
+            background-color: rgba(127, 255, 212, 0.482);
+            border-radius: 5px;
+            padding: 20px;
+        }
+
+        #outputImage {
+            width: 400px;
+            height: 280px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h3>图片上传与预览</h3>
+        <input type="file" id="imageInput"><br>
+        <div style="padding: 20px 0px;"><img id="outputImage" src="" alt="Image preview"></div>
+        <h1 id="djs"></h1>
+    </div>
+    <script type="module">
+        import { ev } from './1.js'
+        const ipt = document.querySelector('#imageInput')
+        ipt.addEventListener('change', (e) => {
+            ev(e)
+        });
+    </script>
+        <script src="daojishi.js"></script>
+</body>
+
+</html>

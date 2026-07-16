@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static',filename='images/favicon.png')}}">
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/bootstrap.min.css')}}" type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/bootstrap-icons.min.css')}}" type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/logo_tips.css')}}" type="text/css">
+    <script src="{{ url_for('static',filename='js/jquery.min.js')}}"></script>
+    <script src="{{ url_for('static',filename='js/crypto-js.js')}}"></script>
+    <!--<script src="{{ url_for('static',filename='js/axios.min.js')}}"></script>
+     <script src="https://cdn.jsdelivr.net/npm/echarts-liquidfill@3.0.0/dist/echarts-liquidfill.min.js"></script> -->
+</head>
+<style>
+    td,th{
+    white-space: normal; /* 允许文本自动换行 */
+    word-break: break-word;
+    max-width:400px;
+vertical-align: middle;
+    }
+    table{
+    margin-top:10px;
+    }
+    .bi::before{
+        vertical-align: 0!important;
+        padding: 3px !important;
+        color: #8383da !important;
+    }
+    .dropdown-menu {
+       min-width: 8rem !important;
+    }
+        #dialog_img,#dialog_img1 {
+            width: 43%;
+            height: 51%;
+            border-radius: 10px;
+            overflow:hidden;
+	       animation: fadeInAndScale 0.5s ease-in-out;
+        }
+
+        .content {
+            width: 100%;
+            /* 或者具体的宽度 */
+            height: 100%;
+            /* 初始高度设为0 */
+        }
+  @keyframes fadeInAndScale {
+    from {
+      opacity: 0; /* 初始状态为完全透明 */
+      transform: scale(0); /* 初始缩放比例 */
+    }
+    to {
+      opacity: 1; /* 结束状态为完全不透明 */
+      transform: scale(1); /* 结束缩放比例 */
+    }
+  }
+</style>
+<body>
+<dialog id="dialog_img">
+        <iframe frameborder="0" class="content"></iframe>
+    </dialog>
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+    <div class="container-fluid">
+        <img style="width:42px;height:auto;" src="{{ url_for('static',filename='images/favicon.png')}}" alt="智科" title="智科科技" data-tooltip="智科科技" />
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse rt" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                 <li class="nav-item">
+                    <a class="nav-link" href="{{url_for('other.upph1')}}">UPPH实时数据</a>
+                </li>
+                 <li class="nav-item">
+                    <a class="nav-link" href="{{url_for('other.gsa')}}">GSA查询</a>
+                </li>
+                 <li class="nav-item">
+                    <a class="nav-link" href="{{url_for('other.mpt')}}">刷卡异常查询</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="javascript:;" id="linecard-link">线别卡刷卡</a>
+                </li>
+                 <li class="nav-item">
+                    <a class="nav-link" href="javascript:;" id="show_img">PIC查询</a>
+                </li>
+                 <li class="nav-item">
+                    <span class="nowTime nav-link" style="font-weight:700;"></span>
+                </li>
+            </ul>
+                </div>
+    </div>
+</nav>
+{% block content %} {% endblock %}
+<script>
+    const date_list=['5/12','7/28','11/20']
+    const today_date=new Date().toLocaleDateString().split('/').slice(1,3).join('/')
+    if(date_list.includes(today_date)){
+        document.querySelector('html').style.filter='grayscale(1)'
+    }
+    function show_dialog(modal_id) {
+        document.querySelector(`#${modal_id}`).showModal();
+    }
+window.onclick = function(event) {
+  var modal = document.getElementById("dialog_img");
+  if (event.target == modal) {
+    modal.close();
+  }
+}
+document.querySelector('#show_img').addEventListener('click', function(event) {
+    event.preventDefault(); // 阻止默认的链接跳转行为
+    document.querySelector('#dialog_img').querySelector('iframe').src = "http://joy_lo:8081/br/demo.asp"; // 设置iframe的src为目标链接
+    show_dialog('dialog_img');
+});
+document.querySelector('#linecard-link').addEventListener('click', function(event) {
+    event.preventDefault(); // 阻止默认的链接跳转行为
+    document.querySelector('#dialog_img').querySelector('iframe').src = "{{ url_for('other.card') }}"; // 设置iframe的src为目标链接
+    show_dialog('dialog_img');
+});
+</script>
+<script src="{{ url_for('static',filename='js/demo_now.js')}}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

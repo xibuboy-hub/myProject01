@@ -1,0 +1,227 @@
+{% extends 'layout.html' %}
+{% block title %}MPT异常查询{% endblock %}
+{% block content %}
+<h3 class="container panel-heading">MPT异常查询</h3>
+<script src="{{ url_for('static',filename='js/xlsx.full.min.js')}}"></script>
+<script src="{{ url_for('static',filename='js/FileSaver.min.js')}}"></script>
+<style>
+    .container {
+        width: 70%;
+        margin: 0 auto;
+    }
+
+    table {
+        margin-top: 10px;
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Verdana !important;
+        font-size: 12px;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    tr:nth-child(odd) {
+        background-color: #dee1e1;
+        color: rgba(0, 0, 255, 0.68);
+    }
+
+    tr:nth-child(even) {
+        background-color: #F7F7F7;
+        color: Blue;
+    }
+
+    th {
+        color: #FFFFFF;
+        background-color: rgb(132, 150, 182);
+        font-weight: bold;
+
+    }
+
+    th,
+    td {
+        /*border-bottom: 1px solid #ccc0c0;*/
+        height: 30px;
+        text-align: center;
+        padding: 3px;
+
+    }
+
+    p {
+        padding: 0;
+        margin: 0;
+    }
+
+    label {
+        font-weight: 700;
+        padding: 5px 0;
+        /*font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;*/
+    }
+
+    textarea {
+        width: 100%;
+        height: 15vh;
+    }
+
+    input {
+        font-size: 12px;
+        font-weight: 900 !important;
+    }
+
+    .setColor {
+        color: DarkOrange !important;
+        font-weight: bold;
+    }
+
+    .brownColor {
+        color: red !important;
+        font-weight: bold;
+    }
+</style>
+<div class="container">
+    <!--    <textarea id="txt"></textarea>-->
+    <p><input type="button" id="search" value="Query" onclick="btn()">
+        <input type="button" id="export" value="ToExcel" onclick="exportTableToExcel();">
+        <label style="padding-left: 20px;" for="p">选择区域:</label>
+        <select id="p">
+            <option value="sub">SUB</option>
+            <option value="tnb">TNB</option>
+        </select></p>
+    <span id="hs" style="text-align: right;font-size: small;font-weight:bold;float: right;"></span>
+    <table id="tableToExport">
+        <thead>
+        <tr>
+            <th>NO.</th>
+            <th>线别</th>
+            <th>姓名</th>
+            <th>工号</th>
+            <th>上班卡</th>
+            <th>线别卡</th>
+            <th>电话</th>
+            <th>下班卡</th>
+        </tr>
+        </thead>
+        <tbody id="tbody">
+        </tbody>
+    </table>
+</div>
+<script>
+    const tbody = document.getElementById('tbody')
+    const search_btn = document.getElementById('search')
+
+    // const tds = document.querySelectorAll('td');
+
+    function colorFont() {
+        const tds = document.querySelectorAll('td');
+        tds.forEach(function (td) {
+            // 检查td的内容是否符合你的条件（例如：包含某个特定的字符串）
+            if (td.textContent.includes('未刷考勤卡')) {
+                // 设置字体颜色为红色
+                td.classList.add('setColor')
+            } else if (td.textContent.includes('未刷線別卡')) {
+                td.classList.add('brownColor')
+            }
+        });
+    }
+
+    // 渲染表格函数
+    function render(data) {
+        let num = 0
+        data.forEach((e) => {
+            const tr = document.createElement('tr')
+            num++;
+            tr.innerHTML = `<td>${num}</td><td>${e[0]}</td><td>${e[1]}</td><td>${e[2]}</td><td>${e[4]}</td><td>${e[6]}</td><td>${e[7].slice(0, 3) + '****' + e[7].slice(-4)}</td><td>${e[8]}</td>`
+            tbody.appendChild(tr)
+        })
+        return num;
+    }
+
+    function countHr(data) {
+        // 统计人数
+        const countMap = {};
+        data.forEach((item) => {
+            const firstElement = item[0];
+            if (countMap[firstElement]) {
+                countMap[firstElement]++;
+            } else {
+                countMap[firstElement] = 1;
+            }
+        })
+        return countMap;
+    }
+
+    // 页面加载直接运行
+    btn();
+    document.getElementById('p').addEventListener('change', () => {
+        btn();
+        document.getElementById('p').disabled ? document.getElementById('p').disabled = false : document.getElementById('p').disabled = true
+    });
+    $('input')[0].addEventListener('click', () => {
+        document.getElementById('p').disabled ? document.getElementById('p').disabled = false : document.getElementById('p').disabled = true
+    });
+
+    // 查询按钮事件
+    function btn() {
+        search_btn.value = 'Querying'
+        $('input')[0].disabled = true
+        tbody.innerHTML = ''
+        let s = Date.now()
+        fetch(`/other/mpt?p=${document.getElementById('p').value}`, {
+            method: 'post',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({'p': document.getElementById('p').value})
+        }).then(res => {
+            if (!res.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return res.json()
+        }).then((data) => {
+            search_btn.value = 'Query'
+            $('input')[0].disabled = false
+            let e = Date.now()
+            render(data.data)
+            colorFont();
+            $('#hs')[0].innerHTML = `本次登录用户:<span style="color: blue;">${data.username}</span>,【${data.qty}个人加班】` + '查询到记录' + $("table tbody tr").length + '条，总耗时' + (e - s) / 1000 + '秒';
+        }).catch((error) => {
+            search_btn.value = 'Query'
+            $('input')[0].disabled = false
+            console.log(error.message)
+            alert('查询失败，请重试。')
+        })
+    }
+
+    // 导出数据到excel
+    function exportTableToExcel() {
+        // 获取表格元素
+        const table = document.getElementById('tableToExport');
+        const wb = XLSX.utils.table_to_book(table, {sheet: "Sheet1"});
+        const ws = wb.Sheets['Sheet1']
+        setCellFormatAsText(ws, 2)
+        const wbout = XLSX.write(wb, {bookType: 'xlsx', type: 'binary'});
+
+        function s2ab(s) {
+            const buf = new ArrayBuffer(s.length); //convert s to arrayBuffer
+            const view = new Uint8Array(buf);  //create uint8 array as viewer
+            for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF; //convert to octet
+            return buf;
+        }
+
+        let name = new Date().getTime()
+        saveAs(new Blob([s2ab(wbout)], {type: "application/octet-stream"}), `mpt_data_${name}.xlsx`); //使用FileSaver.js保存文件
+    }
+
+    // 修改某一列为文本格式
+    function setCellFormatAsText(ws, col) {
+        var range = XLSX.utils.decode_range(ws['!ref']); // 获取工作表的范围
+        for (var R = range.s.r; R <= range.e.r; ++R) { // 遍历行
+            var cell_address = {c: col, r: R}; // 设置列和行
+            var cell_reference = XLSX.utils.encode_cell(cell_address); // 编码单元格地址
+            if (!ws[cell_reference]) continue; // 如果单元格不存在，则跳过
+            ws[cell_reference].t = 's'; // 设置单元格类型为字符串（文本）
+            ws[cell_reference].z = '@'; // 设置单元格格式为文本（可选）
+        }
+    }
+
+</script>
+{% endblock %}

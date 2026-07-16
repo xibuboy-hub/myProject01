@@ -1,0 +1,95 @@
+<link rel="stylesheet" href="{{ url_for('static',filename='css/bootstrap.min.css')}}" type="text/css">
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;">
+    <h2>線別卡刷卡</h2>
+    <br>
+    <div>
+        <form action="{{ url_for('other.card') }}" method="post">
+            <label for="line_name">選擇線別:</label>
+            <select name="line_name" id="line_name">
+                <option value="">請選擇線別</option>
+                <option value="4779-A31SUBA3F_D">KSP3 - A31 - A31SUBA3F_D</option>
+                <option value="4780-A31SUBA3F_N">KSP3 - A31 - A31SUBA3F_N</option>
+                <option value="4783-A31SUBC3F_D">KSP3 - A31 - A31SUBC3F_D</option>
+                <option value="4784-A31SUBC3F_N">KSP3 - A31 - A31SUBC3F_N</option>
+                <option value="4785-A31SUBD3F_D">KSP3 - A31 - A31SUBD3F_D</option>
+                <option value="4786-A31SUBD3F_N">KSP3 - A31 - A31SUBD3F_N</option>
+                <option value="5765-A31SUBE3F_D">KSP3 - A31 - A31SUBE3F_D</option>
+                <option value="5766-A31SUBE3F_N">KSP3 - A31 - A31SUBE3F_N</option>
+                <option value="6278-A31SUBF3F_D">KSP3 - A31 - A31SUBF3F_D</option>
+                <option value="6279-A31SUBF3F_N">KSP3 - A31 - A31SUBF3F_N</option>
+                <option value="11189-A31SUBG3F_D">KSP3 - A31 - A31SUBG3F_D</option>
+                <option value="11190-A31SUBG3F_N">KSP3 - A31 - A31SUBG3F_N</option>
+                <option value="11191-A31SUBH3F_D">KSP3 - A31 - A31SUBH3F_D</option>
+                <option value="11192-A31SUBH3F_N">KSP3 - A31 - A31SUBH3F_N</option>
+                <option value="6299-KS3TNBTNBA_D">KSP3 - KS3TNB - KS3TNBTNBA_D</option>
+                <option value="6300-KS3TNBTNBA_N">KSP3 - KS3TNB - KS3TNBTNBA_N</option>
+                <option value="8986-KS3TNBTNBB_D">KSP3 - KS3TNB - KS3TNBTNBB_D</option>
+                <option value="8987-KS3TNBTNBB_N">KSP3 - KS3TNB - KS3TNBTNBB_N</option>
+                <option value="9178-KS3TNBTNBC_D">KSP3 - KS3TNB - KS3TNBTNBC_D</option>
+                <option value="9179-KS3TNBTNBC_N">KSP3 - KS3TNB - KS3TNBTNBC_N</option>
+                <option value="11203-KS3TNBTNBF_D">KSP3 - KS3TNB - KS3TNBTNBF_D</option>
+                <option value="11204-KS3TNBTNBF_N">KSP3 - KS3TNB - KS3TNBTNBF_N</option>
+                <option value="11205-KS3TNBTNBG_D">KSP3 - KS3TNB - KS3TNBTNBG_D</option>
+                <option value="11206-KS3TNBTNBG_N">KSP3 - KS3TNB - KS3TNBTNBG_N</option>
+            </select>
+            <br><br>
+            <label for="card_no" id="message">輸入工號:</label>
+            <input type="text" name="card_no" style="width: 230px;" id="card_no" placeholder="請輸入工號">
+        </form>
+    </div>
+    <div id="result"></div>
+    <script>
+        window.onload = function () {
+            document.getElementById('card_no').focus();
+            resultDiv.textContent = `先選擇線別，再輸入工號刷卡`;
+            resultDiv.style.color = 'blue'; // 设置提示信息为蓝色
+        };
+        const form = document.querySelector('form');
+        const cardNoInput = document.getElementById('card_no');
+        const resultDiv = document.getElementById('result');
+        const messageLabel = document.getElementById('message');
+        const lineNameSelect = document.getElementById('line_name');
+
+        //设定提示框样式
+        resultDiv.style.fontWeight = 'bold'; // 设置字体加粗
+        resultDiv.style.fontSize = '20px'; // 设置字体大小
+        resultDiv.style.animation = 'fadeOut 2s forwards'; // 添加淡出动画
+        resultDiv.style.marginTop = '20px'; // 设置上边距
+        resultDiv.style.textAlign = 'center'; // 设置文本居中
+
+        lineNameSelect.addEventListener('change', () => {
+            const selectedLine = lineNameSelect.value;
+            const selectedOption = lineNameSelect.options[lineNameSelect.selectedIndex].text;
+            resultDiv.textContent = `已選擇線別: ${selectedOption.split(' - ')[2]}`; // 显示选择的线别
+            resultDiv.style.color = 'blue'; // 设置选择的线别为蓝色
+            console.log(`Selected line: ${selectedLine}`); // 打印选择的线别
+        });
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const cardNo = cardNoInput.value;
+            const lineName = lineNameSelect.value;
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ card_no: cardNo, line_name: lineName })
+                });
+
+                const data = await response.json();
+                if (data.code === 1) {
+                    resultDiv.textContent = "✅️提示信息:" + cardNo + ':'+ data.data.username + ' ' + data.data.message;
+                    cardNoInput.value = ''; // 清空输入框
+                    resultDiv.style.color = 'green'; // 设置成功消息为绿色
+                } else {
+                    resultDiv.textContent = "❌️错误信息:" + cardNo + ': ' + data.data.message;
+                    resultDiv.style.color = 'red'; // 设置错误消息为红色
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</div>

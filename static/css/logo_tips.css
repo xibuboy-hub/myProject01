@@ -1,0 +1,25 @@
+img[data-tooltip] {
+    position: relative;
+    display: inline-block;
+}
+ 
+img[data-tooltip]::after {
+    content: attr(data-tooltip); /* 使用data-tooltip属性的值 */
+    position: absolute;
+    z-index: 1;
+    bottom: 100%; /* 显示在图片下方 */
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.8); /* 背景颜色 */
+    color: white; /* 文字颜色 */
+    border-radius: 4px; /* 圆角 */
+    white-space: nowrap; /* 防止文本换行 */
+    opacity: 0; /* 初始透明 */
+    transition: opacity 0.3s; /* 过渡效果 */
+    pointer-events: none; /* 防止点击穿透 */
+}
+ 
+img[data-tooltip]:hover::after {
+    opacity: 1; /* 鼠标悬停时显示 */
+}

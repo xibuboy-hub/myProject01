@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPPH查询</title>
+    <style>
+        * {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        .main-container {
+            background: linear-gradient(rgb(242 242 242) 200px, rgb(118 195 219 / 64%) 100vh);
+            margin: 100px auto 0 auto;
+            width: 60%;
+            height: 480px;
+            /* background-color: rgb(231, 231, 255); */
+            color: rgb(255, 255, 255);
+            text-align: center;
+            border-radius: 5px;
+            box-shadow: 3px 2px 3px 0px #ecedead3;
+    	    position: relative;
+        }
+
+        h2,
+        h1 {
+            text-align: center;
+            color: rgb(0, 0, 0);
+            padding: 57px;
+            margin: 0;
+        }
+
+        h1 {
+            border-top: 5px dotted rgba(211, 211, 211, 0.555);
+        }
+
+        .flex-container>div:first-child>h2,
+        .flex-container>div:first-child>h1 {
+            border-right: 5px dotted rgba(211, 211, 211, 0.555);
+        }
+
+        .flex-container {
+            display: flex;
+            /* 使用Flexbox */
+            justify-content: space-between;
+            /* 两端对齐 */
+            text-align: justify;
+            /* 文本两端对齐 */
+            text-justify: inter-word;
+            /* 确保单词不被断开 */
+            align-items: center;
+            /* 垂直居中 */
+        }
+
+        .flex-container>div {
+            flex: 1;
+            /* 使所有div平分容器宽度 */
+        }
+
+        label,
+        span {
+            color: #ff0000 !important;
+            font-weight: 700;
+        }
+
+        .img {
+            mix-blend-mode: darken;
+            height: 80px;
+            margin-top: 240px;
+            margin-left: 660px;
+            opacity: 0.4;
+            z-index: 0;
+        }
+
+        h3 {
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        #goal {
+            background: url('../static/images/next.png') 100% 70px / 100% no-repeat;
+            mix-blend-mode: darken;
+            background-size: 90px;
+            display: none;
+        }
+
+        #head {
+            background: url('../static/images/image.png') 100% 0px / 100% repeat-x;
+            padding: 30px 0;
+            border-radius: 10px;
+        }
+	.yuan{
+    	background: radial-gradient(circle at center, #8bc34a, #ff000000);
+    	font-size: 1.1em;
+    	font-weight: 800;
+    	width: 80px;
+    	line-height: 80px;
+    	height: 80px;
+    	position: absolute;
+    	top: 285px;
+    	left: 412px;
+    	border-radius: 40px;
+	display:none;
+	z-index:10000;
+	}
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <div id="head">
+            <h3>UPPH实时数据</h3>
+            <label for="shift_name">选择班别:</label><select name="shift_name" id="shift_name">
+                <option value="D">白</option>
+                <option value="N">夜</option>
+            </select>
+            <label for="station">选择站别:</label><select name="station" id="station">
+                <option value="SUBQC">SUBQC</option>
+                <option value="STRU">STRU</option>
+                <option value="WEIGHT">WEIGHT</option>
+            </select>
+            <!-- <input id="shift" placeholder="输入班别(D/N)" /> -->
+            <input id="line" placeholder="输入线别" />
+            <!-- <input id="station" placeholder="输入站别" /> -->
+            <input id="employee" placeholder="输入人力(仅限数字)" />
+            <input type="button" id="btn" onclick="qidongInterval();" value="查询" /></span><span id="js"
+                style="margin-left:2px;"></span>
+        </div>
+        <hr />
+        <div class="flex-container">
+            <div>
+                <h2 id="cl"></h2>
+            </div>
+            <div>
+                <h2 id="gs"></h2>
+            </div>
+        </div>
+	<div class="yuan"></div>
+        <div class="flex-container">
+            <div>
+                <h1 id="upph">
+                    </h1>
+            </div>
+            <div>
+                <h1 id="goal">
+                    </h1>
+            </div>
+        </div>
+        <!-- <h1 id="upph"></h1><span id="goal"></span> -->
+        <!-- <img src="../static/images/next.png" alt="" srcset=""> -->
+    </div>
+    <script>
+        let timerId = null;
+        let n = 12;
+        // 自执行函数
+        (function () {
+            document.querySelector('h1').style.display = 'None';
+            document.querySelectorAll('h2')[0].style.display = 'None';
+            document.querySelectorAll('h2')[1].style.display = 'None';
+            btn();
+        })();
+        const doms_d = {
+                "cl": document.querySelector('#cl'),
+                "gs": document.querySelector('#gs'),
+                "upph": document.querySelector('#upph'),
+                "shift": document.querySelector("#shift_name"),
+                "line": document.querySelector("#line"),
+                "station": document.querySelector("#station"),
+                "employee": document.querySelector("#employee"),
+                "goal": document.querySelector("#goal"),
+		"yuan":document.querySelector(".yuan")
+            }
+        // 处理goal数据
+        function goal(line, el) {
+            const goal = [{ "2FA31ASSY": "8.34" }, { "2FA31PACK": "17.64" }, { "2FA31REP": "4.31" }, { "3FA31ASSY": "8.34" }, { "3FA31PACK": "17.64" }, { "3FA31REP": "4.16" }, { "SUB": "9.21" }, { "TNB": "10.85" }]
+            goal.forEach((item) => {
+                for (let k in item) {
+                    if (item.hasOwnProperty(k)) {
+                        // console.log(`key:${k},value:${item[k]}`)
+                        if (`${k}` == line) {
+                            // console.log(`${line}_goal_value:${item[k]}`)
+                            el.innerHTML = `Goal:${item[k]}`
+			    return item[k]
+                        }
+                    }
+                }
+            })
+        }
+        // 获取upph数据
+        function get_upph_data() {
+            // doms = {
+            //     "shift": document.querySelector("#shift").value,
+            //     "line": document.querySelector("#line").value,
+            //     "station": document.querySelector("#station").value,
+            //     "employee": document.querySelector("#employee").value
+            // }
+            fetch(`{{url_for("other.a_upph")}}`, {
+                method: 'POST',
+                headers: {
+                    "content-type": "application/json"
+                },
+                body: JSON.stringify({
+                    "line": doms_d.line.value,
+                    "station": doms_d.station.value,
+                    "shift": doms_d.shift.value,
+                    "employee": doms_d.employee.value,
+                })
+            }).then(response => response.json()).then(data => {
+                // console.log(data)
+                doms_d.cl.innerHTML = `产量: ${data.data.product_qty}`
+                doms_d.gs.innerHTML = `工时: ${data.data.qty_hr}`
+                doms_d.upph.innerHTML = `UPPH: ${data.data.upph}`
+		doms_d.yuan.innerHTML = `${(parseFloat(doms_d.upph.innerText.split(':')[1])/parseFloat(doms_d.goal.innerText.split(':')[1])*100).toFixed(2)}%`
+		doms_d.yuan.style.display = 'block';
+                goal(doms_d.line.value, doms_d.goal)
+                document.querySelector('h1').style.display = 'block';
+                document.querySelectorAll('h1')[1].style.display = 'block';
+                document.querySelectorAll('h2')[0].style.display = 'block';
+                document.querySelectorAll('h2')[1].style.display = 'block';
+
+            }).catch(error => {
+                console.error("error:", error.message)
+            })
+        }
+        // 查询按钮函数
+        function btn() {
+            document.querySelector("#btn").addEventListener('click', () => {
+                if (document.querySelector("#shift_name").disabled & document.querySelector("#line").disabled & document.querySelector("#station").disabled & document.querySelector("#employee").disabled & timerId) {
+                    document.querySelector("#shift_name").disabled = false;
+                    document.querySelector("#line").disabled = false;
+                    document.querySelector("#station").disabled = false;
+                    document.querySelector("#employee").disabled = false;
+                } else {
+                    document.querySelector("#shift_name").disabled = true;
+                    document.querySelector("#line").disabled = true;
+                    document.querySelector("#station").disabled = true;
+                    document.querySelector("#employee").disabled = true;
+                }
+            })
+        }
+        function js() {
+            n--;
+            document.querySelector('#js').innerText = `${n - 1}秒后刷新`
+            if (n === 5) {
+                // 获取upph数据
+                get_upph_data();
+            }
+            if (n < 3) {
+                n = 12;
+            }
+        }
+        function qidongInterval() {
+            get_upph_data();
+            document.querySelector('#btn').disabled = true;
+            document.querySelector('h3').innerHTML = `${doms_d.line.value}-UPPH实时数据`
+            timerId = setInterval(js, 1000)
+        }
+        //输入框解锁
+        doms_d.upph.addEventListener('click', function () {
+            console.log('输入框解锁成功');
+            doms_d.shift.disabled = false;
+            doms_d.line.disabled = false;
+            doms_d.station.disabled = false;
+            doms_d.employee.disabled = false;
+            clearInterval(timerId)
+            n = 3
+            document.querySelector('#btn').disabled = false;
+            // 在这里执行你的代码，比如验证输入等
+        });
+    </script>
+</body>
+
+</html>

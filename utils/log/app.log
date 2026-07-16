@@ -1,0 +1,5 @@
+2025-05-02 10:27:22,139-DEBUG-this is a debug message
+2025-05-02 10:27:22,139-INFO-this is a info message
+2025-05-02 10:27:22,139-WARNING-this is a warning message
+2025-05-02 10:27:22,139-ERROR-this is a error message
+2025-05-02 10:27:22,139-CRITICAL-this is a critical message

@@ -1,0 +1,254 @@
+{% extends 'layout.html' %}
+{% block title %}UPPH 实时数据_v1{% endblock %}
+{% block content %}
+<!--<script src="{{ url_for('static',filename='js/echarts.js')}}"></script>-->
+<style>
+    table {
+        text-align: center;
+    }
+
+    .up {
+        color: red !important;
+        background: pink;
+        font-weight: 1000;
+        border-radius: 3px;
+    }
+
+    .goal {
+        color: rgb(0, 0, 0) !important;
+        background: rgb(169, 245, 197) !important;
+        font-weight: 1000;
+    }
+
+    .up1 {
+        color: white !important;
+        background-color: green !important;
+        font-weight: 1000;
+        /* box-shadow: inset 0px 0px 20px 2px #04671bd6 !important; */
+    }
+
+    #sub,
+    #tnb {
+        cursor: pointer;
+    }
+
+    #js {
+        margin-left: 20px;
+    }
+
+    td,
+    th {
+        padding: 4px 5px;
+        vertical-align: middle;
+    }
+
+    p {
+        margin-top: 0;
+        margin-bottom: 0rem;
+        /*display: inline-table;*/
+        display: inline-block;
+        background-color: #a8bede;
+        border-radius: 3px;
+        padding: 2px 20px;
+        /*float: left;*/
+    }
+
+    #fresh {
+        float: right;
+    }
+
+    #refresh {
+        width: 24px;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    @keyframes sj {
+        0% {
+            background-color: blue;
+        }
+
+        25% {
+            background-color: white;
+        }
+
+        50% {
+            background-color: green;
+        }
+
+        75% {
+            background-color: white;
+        }
+    }
+
+    #refresh:hover {
+        animation: sj 0.5s linear infinite;
+        font-weight: 700 !important;
+        border-radius: 12px;
+        background-color: red;
+    }
+
+    #main_sub,
+    #main_tnb {
+        width: 360px;
+        height: 360px;
+        opacity: 0.8;
+    }
+
+    .wh {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 300px;
+        color: red;
+    }
+
+    marquee {
+        color: red;
+        font-family: Helvetica;
+    }
+
+    #tableToExport {
+        width: 100%;
+        font-size: 12px;
+    }
+
+    #tbody tr:nth-child(odd) {
+        background-color: #E7E7FF;
+        color: Blue;
+    }
+
+    #tbody tr:nth-child(even) {
+        background-color: #F7F7F7;
+        color: Blue;
+    }
+
+    #tableToExport th {
+        color: #FFFFFF;
+        background-color: rgb(100, 149, 237);
+        font-weight: bold;
+
+    }
+
+    .h {
+        display: none;
+    }
+
+    .ajaxclpan_header_img {
+        width: 13px;
+        height: 13px;
+    }
+</style>
+<div class="container">
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th colspan="4">
+                    <h5 id="area_sub">SUB白_UPPH</h5>
+                </th>
+                <th colspan="4">
+                    <h5 id="area_tnb">TNB白_UPPH</h5>
+                </th>
+            </tr>
+            <tr>
+                <th colspan="8">
+                    <div>
+                        <form class="sub_form" method="POST">
+                            <p>
+                                <input type="radio" id="option1" class="shift" name="shift" value="D" disabled>
+                                <label for="option1">白班</label>
+                                <input type="radio" id="option2" class="shift" name="shift" value="N" disabled>
+                                <label for="option2">夜班</label>
+                            </p>
+                            <label id="sub">SUB人力：</label><input type="text" id="sub_em" placeholder="SUB人力"
+                                name="sub_hr" />
+                            <label id="tnb">TNB人力：</label><input type="text" id="tnb_em" placeholder="TNB人力"
+                                name="tnb_hr" />
+                            <input type="button" value="提交" onclick="qidongInterval();" class="btn btn-primary btn-sm"
+                                id="btn"><span id="fresh"><img src="{{url_for('static',filename='images/refresh.svg')}}"
+                                    id="refresh" alt="svg_img" title="点击刷新"></span><span id="js"
+                                style="margin-left:2px;width:90px;"></span>
+                        </form>
+                    </div>
+                </th>
+            </tr>
+        </thead>
+        <tbody class="table-group-divider">
+            <tr>
+                <td id="sub_cl">产量：{{data.data.product_qty_sub}}</td>
+                <td id="sub_gs">工时：{{data.data.qty_hr_sub}}</td>
+                <td><input type="text" placeholder="额外工时 " id="sub_ew" /></td>
+                <td id="sub_upph" class="up">
+                    <h5>UPPH:{{data.data.upph_sub}}</h5><span></span>
+                </td>
+                <td id="tnb_cl">产量：{{data.data.product_qty_tnb}}</td>
+                <td id="tnb_gs">工时：{{data.data.qty_hr_tnb}}</td>
+                <td><input type="text" placeholder="额外工时" id="tnb_ew" /></td>
+                <td id="tnb_upph" class="up">
+                    <h5>UPPH:{{data.data.upph_tnb}}</h5><span></span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8">
+                    <div class="ajaxclpan_header_img">
+                        <input type="image" name="imageControl" id="imageControl"
+                            src="{{url_for('static',filename='images/collapse.jpg')}}" style="border-width:0px;"
+                            title="Collapse Query Panel">
+                    </div>
+                    <table id="tableToExport">
+                        <thead>
+                            <tr>
+                                <th>NO.</th>
+                                <th>线别</th>
+                                <th>产量</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody">
+                        </tbody>
+                    </table>
+                </td>
+
+            </tr>
+        </tbody>
+    </table>
+<iframe src="http://joy_lo:8081/br/calc.html" frameborder="0" style="height:105px;overflow-y: hidden;padding:0;" class="container"></iframe>
+    <!--    新旧版切换按钮-->
+    <!--    <div class="form-check form-switch" style="float:right;z-index: 100;">-->
+    <!--        <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked">-->
+    <!--        <label class="form-check-label" for="flexSwitchCheckChecked">切换旧版</label>-->
+    <!--    </div>-->
+    <!--    <br>-->
+    <!--    <div id="upph_echarts" style="width:1300px;height:400px;display:none;"></div>-->
+    <!--    <div style="justify-content:space-evenly;display: flex" id="yibiaopan">-->
+    <!--        <div id="main_sub"></div>-->
+    <!--        <div id="main_tnb"></div>-->
+    <!--    </div>-->
+</div>
+<script>
+    function _days() {
+        let _timestamp = (parseInt(document.cookie.split('=')[3]) - (new Date).getTime())
+        let days = Math.floor(_timestamp / (24 * 3600 * 1000)); // 计算出天数
+        let level = _timestamp % (24 * 3600 * 1000); // 计算天数后剩余的时间
+        let hours = Math.floor(level / (3600 * 1000)); // 计算剩余的小时数
+        let level2 = level % (3600 * 1000); // 计算剩余小时后剩余的毫秒数
+        let minutes = Math.floor(level2 / (60 * 1000)); // 计算剩余的分钟数
+        document.querySelector("marquee").innerHTML = `温馨提示:您订阅的UPPH查看服务将于${days}天${hours}时${minutes}分后到期,为不影响您正常使用,请及时续费.谢谢您的配合！`
+        if (days === 0 && hours === 0 && minutes === 0) {
+            alert('您的服务已到期,请续费后重新登陆，谢谢~');
+            location.href = '/admin/login';
+        } else {
+            return 0;
+        }
+
+    }
+
+    let expire_time = (parseInt(document.cookie.split('=')[3]) - (new Date).getTime()) / (1000 * 60 * 60 * 24);
+    if (expire_time <= 6) {
+        document.querySelector('table').parentNode.insertBefore(document.createElement("marquee"), document.querySelector('table'));
+        _days();
+        setInterval(_days, 60000)
+    }
+</script>
+<script src="{{ url_for('static',filename='js/upph_js.js')}}"></script>
+<!--<script src="{{ url_for('static',filename='js/upph_charts.js')}}"></script>-->
+{% endblock %}

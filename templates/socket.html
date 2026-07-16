@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compal MES Web 3.1</title>
+</head>
+
+<body style="width: 80%;margin: 0 auto;">
+    <h4 id="total_count" style="margin: 5px;">总计: 0</h4><label id="refresh_timer"></label>
+    <div id="radio_s"><label><input type="radio" name="selectDay" value="d1" checked>当日</label>
+        <label><input type="radio" name="selectDay" value="d5">5日</label>
+        <label><input type="radio" name="selectDay" value="d10">10日</label>
+    </div>
+    <table border="1" style="width: 100%; border-collapse: collapse; text-align: center;">
+        <tbody id="dataTableBody">
+            <!-- 表格内容将通过JavaScript动态添加 -->
+        </tbody>
+    </table>
+    <script>
+        const day_obj = { "d1": "f62", "d5": "f164", "d10": "f174" }
+        const selectedRadio = document.querySelector('#radio_s');
+        selectedRadio.addEventListener('click', (e) => {
+            if (e && day_obj.hasOwnProperty(e.target.value)) {
+                // console.log("选中的选项:", e.target.value);
+                // console.log("选中的值:", day_obj[e.target.value]);
+                refreshData(e.target.value)
+            } else {
+                console.log("用户未选择任何选项");
+            }
+        })
+
+        function arraySum(arr) {
+            // 降序排列
+            return arr.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+        }
+        function convertNum(n) {
+            if (n >= 100000000 || n <= -100000000) {
+                return (n / 100000000).toFixed(2) + '亿';
+            } else if (n >= 10000 || n <= -10000) {
+                return (n / 10000).toFixed(2) + '万';
+            } else {
+                return n.toString();
+            }
+        }
+        const tableBody = document.getElementById('dataTableBody');
+        let rowCount = 0; // 当前行数计数器
+        let cellCount = 0; // 当前单元格计数器
+        let currentRow = null; // 当前行元素
+
+        async function fetchData(day) {
+            // 假设这是从后端获取的数据，这里用静态数据模拟
+            try {
+                const response = await fetch("{{url_for('other.get_bkzj')}}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ d: day })
+                });
+                // console.log('params:', day);
+                const originalArray = await response.json();
+                let data = [...originalArray].sort((a, b) => b[day_obj[day]] - a[day_obj[day]]);
+                console.log('Fetched data:', data); // 打印获取的数据，便于调试
+                let sum = arraySum(data.map(item => item[day_obj[day]])); // 计算总和
+                document.getElementById('total_count').textContent = `Compal MES Web 3.1: ${convertNum(sum)}`;
+                // 循环创建32行
+                for (let i = 0; i < 32; i++) {
+                    // 创建行元素
+                    var row = document.createElement('tr');
+                    // 循环创建4列
+                    for (let j = 0; j < 4; j++) {
+                        // 计算当前数据的索引
+                        var index = i * 4 + j;
+                        // 如果索引超出数据范围，则创建一个空的单元格
+                        if (index >= data.length) {
+                            var cell = document.createElement('td');
+                            cell.textContent = ''; // 可以设置为空字符串或者其它提示信息
+                        } else {
+                            // 创建单元格并填充数据
+                            var cell1 = document.createElement('td');
+                            var cell2 = document.createElement('td');
+                            cell1.textContent = `${data[index].f14}`; // 示例数据格式化输出; // 使用数据填充单元格
+                            cell2.textContent = `${convertNum(data[index][day_obj[day]])}`; // 示例数据格式化输出; // 使用数据填充单元格
+
+                            if (parseInt(cell2.textContent) >= 0) {
+                                cell1.style.color = 'white';
+                                cell2.style.color = 'white';
+                                cell1.style.backgroundColor = 'red'; // 设置较小的字体大小
+                                cell2.style.backgroundColor = 'red';
+                            }
+                            else {
+                                cell1.style.color = 'white';
+                                cell2.style.color = 'white';
+                                cell1.style.backgroundColor = 'green'; // 设置较小的字体大小
+                                cell2.style.backgroundColor = 'green';
+                            }
+                        }
+                        // 将单元格添加到行中
+                        row.appendChild(cell1);
+                        row.appendChild(cell2);
+                    }
+                    // 将行添加到表格中
+                    tableBody.appendChild(row);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        // 刷新数据
+        async function refreshData(day) {
+            const response = await fetch("{{url_for('other.get_bkzj')}}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ d: day })
+            });
+            const originalArray = await response.json();
+            // 排序
+            data = [...originalArray].sort((a, b) => b[day_obj[day]] - a[day_obj[day]]);
+            // 求和
+            sum = arraySum(data.map(item => item[day_obj[day]])); // 计算总和
+            // 显示更新总和
+            document.getElementById('total_count').textContent = `Compal MES Web 3.1: ${convertNum(sum)}`;
+            for (let i = 0; i < 32; i++) {
+                // 创建行元素
+                var row = document.createElement('tr');
+                // 循环创建4列
+                for (let j = 0; j < 4; j++) {
+                    // 计算当前数据的索引
+                    var index = i * 4 + j;
+                    // 如果索引超出数据范围，则创建一个空的单元格
+                    if (index >= data.length) {
+                        var cell = document.querySelectorAll('td');
+                        cell.textContent = ''; // 可以设置为空字符串或者其它提示信息
+                    } else {
+                        // 创建单元格并填充数据
+                        var cell1 = document.querySelectorAll('td')[0];
+                        var cell2 = document.querySelectorAll('td')[1];
+                        cell1.textContent = `${data[index].f14}`; // 示例数据格式化输出; // 使用数据填充单元格
+                        cell2.textContent = `${convertNum(data[index][day_obj[day]])}`; // 示例数据格式化输出; // 使用数据填充单元格
+                        if (parseInt(cell2.textContent) >= 0) {
+                            cell1.style.color = 'white';
+                            cell2.style.color = 'white';
+                            cell1.style.backgroundColor = 'red'; // 设置较小的字体大小
+                            cell2.style.backgroundColor = 'red';
+                            if (cell1.textContent == '半导体' || cell1.textContent == '饮料乳品' || cell1.textContent == '煤炭开采') {
+                                cell1.style.backgroundColor = 'yellow';
+                                cell1.style.color = 'red';
+                            }
+                        }
+                        else {
+                            cell1.style.color = 'white';
+                            cell2.style.color = 'white';
+                            cell1.style.backgroundColor = 'green'; // 设置较小的字体大小
+                            cell2.style.backgroundColor = 'green';
+                            if (cell1.textContent == '半导体' || cell1.textContent == '饮料乳品' || cell1.textContent == '煤炭开采') {
+                                cell1.style.backgroundColor = 'yellow';
+                                cell1.style.color = 'red';
+                            }
+                        }
+                    }
+                    // 将单元格添加到行中
+                    row.appendChild(cell1);
+                    row.appendChild(cell2);
+                }
+                // 将行添加到表格中
+                tableBody.appendChild(row);
+            }
+        }
+
+        let timerId = null;
+        let n = 15;
+        //启动定时器
+        function startInterval() {
+            document.getElementById('refresh_timer').innerText = `${n}秒后刷新`
+            n--;
+            if (n <= 0) {
+                const checkedRadio = document.querySelector('input[name="selectDay"]:checked');
+                refreshData(checkedRadio.value);
+                n = 15;
+            }
+        }
+        function qidongInterval() {
+            fetchData('d1');
+            timerId = setInterval(startInterval, 1000)
+        }
+        window.onload = function () {
+            qidongInterval();
+        };
+    </script>
+</body>
+
+</html>
