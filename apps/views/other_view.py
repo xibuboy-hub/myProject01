@@ -173,13 +173,17 @@ def card():
     if request.method == 'POST':
         card_no = request.get_json().get('card_no')
         linename = request.get_json().get('line_name')
+        if request.get_json().get('line_name').split('-')[1][:3]=='A31':
+            area=request.get_json().get('line_name').split('-')[1][:3]
+        else:
+            area=request.get_json().get('line_name').split('-')[1][:6]
         if not card_no:
             return jsonify({"code": 0, "data": {"message": "工号不能为空！"}})
-        card_result,username= card_record(card_no, linename)
+        card_result,username= card_record(card_no, area,linename)
         if card_result:
-            return jsonify({"code": 1, "data": {"message": "刷卡OK!", "username": username}})
+            return jsonify({"code": 1, "data": {"message": "刷卡OK!", "username": username,"area":area}})
         else:
-            return jsonify({"code": 0, "data": {"message": "工号错误!", "username": username}})
+            return jsonify({"code": 0, "data": {"message": "工号错误!", "username": username,"area":area}})
     return render_template('card.html')
 
 @bp.route('/bkzj', methods=['GET', 'POST'])

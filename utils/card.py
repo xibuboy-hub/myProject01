@@ -21,7 +21,7 @@ def get_line_name():
     print(line_response.text)
     return line_response.text
 
-def card_record(no,linename):
+def card_record(no,area,linename):
     cookies = {
         'ASP.NET_SessionId': 'hnw4g1551he42prw0tla5hvo',
         'lineid': 'lineid=6278',
@@ -46,7 +46,7 @@ def card_record(no,linename):
         'ntname': 'JOY_LO',
         'computer': 'NA',
         'Plant': 'KSP3',
-        'Area': 'A31',
+        'Area': area,
         'Line': line,
         'PlantId': '4',
         'AreaId': '3365',

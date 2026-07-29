@@ -62,7 +62,7 @@ vertical-align: middle;
     </dialog>
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
-        <img style="width:42px;height:auto;" src="{{ url_for('static',filename='images/favicon.png')}}" alt="智科" title="智科科技" data-tooltip="智科科技" />
+        <img style="width:42px;height:auto;" src="{{ url_for('static',filename='images/favicon.png')}}" alt="云顶科技" title="云顶科技" data-tooltip="云顶科技" />
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -93,11 +93,6 @@ vertical-align: middle;
 </nav>
 {% block content %} {% endblock %}
 <script>
-    const date_list=['5/12','7/28','11/20']
-    const today_date=new Date().toLocaleDateString().split('/').slice(1,3).join('/')
-    if(date_list.includes(today_date)){
-        document.querySelector('html').style.filter='grayscale(1)'
-    }
     function show_dialog(modal_id) {
         document.querySelector(`#${modal_id}`).showModal();
     }

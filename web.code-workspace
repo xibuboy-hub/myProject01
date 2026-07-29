@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"name": "web",
+			"path": "."
+		}
+	],
+	"settings": {
+		"markdown.validate.enabled": true,
+		"chat.disableAIFeatures": true
+	}
+}
