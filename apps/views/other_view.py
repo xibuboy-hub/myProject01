@@ -173,10 +173,10 @@ def card():
     if request.method == 'POST':
         card_no = request.get_json().get('card_no')
         linename = request.get_json().get('line_name')
-        if request.get_json().get('line_name').split('-')[1][:3]=='A31':
-            area=request.get_json().get('line_name').split('-')[1][:3]
+        if linename.split('-')[1][:3]=='A31':
+            area=linename.split('-')[1][:3]
         else:
-            area=request.get_json().get('line_name').split('-')[1][:6]
+            area=linename.split('-')[1][:6]
         if not card_no:
             return jsonify({"code": 0, "data": {"message": "工号不能为空！"}})
         card_result,username= card_record(card_no, area,linename)
