@@ -23,7 +23,7 @@ class DevelopmentConfig(Config):
 
 
 class ProductionConfig(Config):
-    DEBUG = True
+    DEBUG = False
     DATABASE_URI = ''
 
 

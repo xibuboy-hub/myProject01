@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MES RPT0303.(211) Repair DashBoard</title>
+    <style>
+        h2 {
+            text-align: center;
+            color: white;
+            margin: 10px;
+            padding: 10px;
+        }
+        .c_line {
+            /* font-size: 12px; */
+            padding: 10px !important;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .c_line:hover {
+            background-color: #ddd;
+        }
+
+        .c_fail {
+            /* font-size: 12px; */
+            padding: 10px;
+            text-align: center;
+        }
+
+        dialog table th,
+        td {
+            border: 1px solid rgb(136, 136, 136);
+            color: #3939ff;
+            /* font-size: 12px; */
+            padding: 5px;
+        }
+
+        dialog table th {
+            background-color: #6495ED;
+            /* 浅灰色 */
+            COLOR: white;
+        }
+
+        dialog table tr:nth-child(even),
+        th {
+            background-color: #E7E7FF;
+            /* 浅灰色 */
+        }
+
+        caption {
+            padding-bottom: 10px;
+        }
+
+        dialog table tr:hover {
+            background-color: #cccce8;
+            /* 浅灰色 */
+        }
+
+        dialog {
+            padding: 8px;
+        }
+
+        dialog input {
+            border-radius: 15px;
+            cursor: pointer;
+            background-color: #b8bbea;
+            border: 0;
+            color: white;
+            float: right;
+            padding:1.45px 5px;
+        }
+
+        dialog input:hover {
+            background-color: #ff0d00;
+        }
+    </style>
+</head>
+
+<body style="width: 80%;margin: 0 auto;">
+    <dialog id="fail_detail" style="border-radius: 10px;border: none;width: 300px;">
+        <table id="table" style="width: 100%; border-collapse: collapse; text-align: center;">
+            <span style="text-align: right;margin:5px 2px;"><input type="button" value="X"
+                    onclick="document.getElementById('fail_detail').close();"></span>
+            <caption>不良明细</caption>
+            <thead>
+                <th>Line</th>
+                <th>Fail qty</th>
+            </thead>
+            <tbody id="tbody">
+            </tbody>
+        </table>
+    </dialog>
+    <div style="background-color: #6495ED;margin-top: 0;"><h2>MES RPT0303.(211) Repair DashBoard</h2></div>
+    <label id="refresh_timer"></label><span id="total_count" style="margin: 5px;background-color: #6495ED;">总计: 0</span>
+    <div id="radio_s"><label><input type="radio" name="selectDay" value="" checked>所有</label>
+        <label><input type="radio" name="selectDay" value="SUB">SUB</label>
+        <label><input type="radio" name="selectDay" value="K3FA31">TNB</label>
+        <label><input type="radio" name="selectDay" value="ASSY">ASSY</label>
+    </div>
+    <table border="1" style="width: 100%; border-collapse: collapse; text-align: center;">
+        <tbody id="dataTableBody">
+            <!-- 表格内容将通过JavaScript动态添加 -->
+        </tbody>
+    </table>
+    <script>
+        const selectedRadio = document.querySelector('#radio_s');
+        const tableBody = document.getElementById('dataTableBody');
+        let timerId = null;
+        let n = 300;
+        // 监听radio按钮点击事件
+        selectedRadio.addEventListener('click', (e) => {
+            if (e) {
+                //console.log("选中的选项:", e.target.value);
+                fetchData(e.target.value)
+            } else {
+                console.log("用户未选择任何选项");
+            }
+        })
+        // 数组求和
+        function arraySum(arr) {
+            // 降序排列
+            return arr.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+        }
+        // 数字转换
+        function convertNum(n) {
+            if (n >= 100000000 || n <= -100000000) {
+                return (n / 100000000).toFixed(2) + '亿';
+            } else if (n >= 10000 || n <= -10000) {
+                return (n / 10000).toFixed(2) + '万';
+            } else {
+                return n.toString();
+            }
+        }
+        // 获取数据
+        async function fetchData(line) {
+            // 从后端获取的数据
+            try {
+                const response = await fetch("{{url_for('other.fail_qty')}}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ line: line })
+                });
+                // 处理数据，排序
+                const originalArray = await response.json();
+                let data = [...originalArray].sort();
+                // 计算总和
+                let sum = arraySum(data.map(item => item.fail)); 
+                // 更新总计
+                document.getElementById('total_count').textContent = `总计: ${sum}`;
+                // 如果有数据返回择渲染数据
+                if (data.length > 0) {
+                    renderData(data);
+                } else {
+                    tableBody.innerHTML = '';
+                    var tr = document.createElement("tr");
+                    tr.innerHTML = `<td style="text-align:center;">无数据</td>`;
+                    tableBody.appendChild(tr);
+                    return
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        // 渲染数据到页面
+        function renderData(data) {
+            tableBody.innerHTML = '';
+            for (let i = 0; i < 32; i++) {
+                // 创建行元素
+                var row = document.createElement('tr');
+                // 循环创建4列
+                for (let j = 0; j < 4; j++) {
+                    // 计算当前数据的索引
+                    var index = i * 4 + j;
+                    // 如果索引超出数据范围，则创建一个空的单元格
+                    if (index >= data.length) {
+                        var cell = document.createElement('td');
+                        cell.textContent = ''; // 可以设置为空字符串或者其它提示信息
+                    } else {
+                        // 创建单元格并填充数据
+                        var cell1 = document.createElement('td');
+                        cell1.className = 'c_line'
+                        cell1.title='点击查看明细'
+                        var cell2 = document.createElement('td');
+                        cell2.className = 'c_fail'
+                        cell1.textContent = `${data[index].line}`; // 示例数据格式化输出; // 使用数据填充单元格
+                        cell2.textContent = `${data[index].fail}`; // 示例数据格式化输出; // 使用数据填充单元格
+
+                        if (parseInt(cell2.textContent) >= 10) {
+                            cell1.style.color = 'white';
+                            cell2.style.color = 'white';
+                            cell1.style.backgroundColor = 'red'; // 设置较小的字体大小
+                            cell2.style.backgroundColor = 'red';
+                        }
+                        else {
+                            cell1.style.color = 'white';
+                            cell2.style.color = 'white';
+                            cell1.style.backgroundColor = 'green'; // 设置较小的字体大小
+                            cell2.style.backgroundColor = 'green';
+                        }
+                    }
+                    // 将单元格添加到行中
+                    row.appendChild(cell1);
+                    row.appendChild(cell2);
+                }
+                // 将行添加到表格中
+                tableBody.appendChild(row);
+            }
+            const c_line = document.querySelectorAll('.c_line')
+            c_line.forEach(item => (item.addEventListener('click', (e) => {
+                if (e) {
+                    // console.log("点击了:", e.target.innerText);
+                    dg = document.querySelector('#fail_detail')
+                    render_detail(e.target.innerText)
+                    dg.showModal()
+                    //fetchData(e.target.value)
+                } else {
+                    console.log("用户未选择任何选项");
+                }
+            })))
+        }
+        //启动定时器
+        function startInterval() {
+            document.getElementById('refresh_timer').innerText = `${n}秒后刷新`
+            n--;
+            if (n <= 0) {
+                const checkedRadio = document.querySelector('input[name="selectDay"]:checked');
+                fetchData(checkedRadio.value);
+                n = 300;
+            }
+        }
+        function qidongInterval() {
+            fetchData('');
+            timerId = setInterval(startInterval, 1000)
+        }
+        window.onload = function () {
+            qidongInterval();
+        };
+        async function render_detail(line) {
+            var tbody = document.getElementById("tbody");
+            tbody.innerHTML = '';
+            var fail_detail = await get_fail_detail(line);
+            // console.log(Object.keys(fail_detail).length);
+            // 将对象转换为键值对数组并排序
+            let sortedEntries = Object.entries(fail_detail).sort((a, b) => b[1] - a[1]);
+            // 如果你需要结果是一个对象的形式，可以这样转换
+            fail_detail = Object.fromEntries(sortedEntries);
+            for (let key in fail_detail) {
+                if (fail_detail.hasOwnProperty(key)) {
+                    var tr = document.createElement("tr");
+                    tr.innerHTML = `<td style="text-align:center;">${key}</td><td style="text-align:center;">${fail_detail[key]}</td>`;
+                    tbody.appendChild(tr);
+                }
+            }
+        }
+        async function get_fail_detail(line) {
+            const data = await fetch(`http://joy_lo:8083/other/line_fail`, {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ line: line })
+            });
+            const fail_detail = await data.json();
+            return fail_detail;
+        }
+    </script>
+</body>
+
+</html>

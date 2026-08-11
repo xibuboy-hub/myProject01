@@ -80,4 +80,6 @@ def pp_url() -> list:
 
 
 if __name__ == '__main__':
-    print(pp_url())
+    print(pp_url()[0])
+
+

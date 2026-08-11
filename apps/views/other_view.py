@@ -27,7 +27,14 @@ from utils.sub_mpt import sub_mpt
 from utils.card import card_record
 from utils.encrypt import aes_decrypt
 from utils.wrapper import login_reguired
+
+from utils.mesLogin import pp_url
+
+from utils.fail_qty_211 import parse_fail_part,get_fail_qty,pp_url_211
 from utils.bkzj import get_bkzj1
+
+import json
+import pandas as pd
 
 bp = Blueprint('other', __name__, url_prefix='/other')
 #operate = Access()
@@ -41,6 +48,26 @@ bp = Blueprint('other', __name__, url_prefix='/other')
 def uploaded_file(filename):
     return send_from_directory('../uploads/', filename)
 
+@bp.route('/a_upph', methods=['GET', 'POST'])
+def a_upph():
+    try:
+        u = assy_mes.UPPH_DAILY()
+        if request.method == 'POST':
+            # 从前端获取数据
+            data = request.get_json()
+            shift = data.get('shift', 'D')
+            line = data.get('line', 'ASSY')
+            station = data.get('station', 'STRU')
+            employee = data.get('employee', 10)
+            # 参数校验
+            if not shift or not line or not station or not employee:
+                return jsonify({"message": "Missing required parameters"})
+            upph_data = u.upph(int(employee), line, shift, station)
+            return jsonify({"status": "success", "data": upph_data})
+            # return render_template("a_upph.html")
+        return render_template('a_upph.html')
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
 
 # 参数加密测试
 @bp.route('/upph1', methods=['GET', 'POST'])
@@ -96,6 +123,47 @@ def upph2():
     data = mes_n.upph(1, 1, 'D')
     return render_template('upph1.html', data=data)
 
+@bp.route('/repair211/<line>/<shift>', methods=['get', 'post'])
+def repair(line: str, shift: str) -> Response:
+    try:
+        today1 = str(datetime.datetime.today()).split(' ')[0]
+        data = request.get_json().get('date')
+        e_type = request.get_json().get('e_type')
+        if data:
+            today = data.replace('-', '/')
+        else:
+            today = today1.replace('-', '/')
+        resp_data = mes211.main_request(today, line, shift, e_type)
+        resp_data["input"] = mes_n.qcm_r(line, shift, today)
+        if resp_data:
+            return jsonify({"code": 1, "data": resp_data})
+        else:
+            return jsonify({"code": 0, "data": "后端获取数据出错，未查询到不良~稍后再试"})
+    except Exception as e:
+        return jsonify({"code": 0, "msg": f'获取数据出错，具体原因{str(e)}'})
+
+
+@bp.route('/fail_qty', methods=['GET','POST'])
+def fail_qty():
+    """
+    获取不良数量
+    """
+    if request.method == 'POST':
+        line = request.get_json().get('line','')
+        main_url = pp_url_211()[0]
+        get_fail_qty(main_url)
+        return jsonify(parse_fail_part('211.xls',line))  
+    return render_template('fail.html')                 
+@bp.route('/line_fail',methods=['POST'])
+def fail_detail():
+    """
+    获取失败的详细信息
+    """
+    line=request.get_json().get('line','')
+    df = pd.read_excel("D:/Program Files (x86)/web/211.xls", engine="xlrd")
+    due_fail_groupby=df.groupby(["TEST_LINE",'ERROR_DESC'])["TEST_LINE"].count()
+    line_fail_detail=df.loc[df['TEST_LINE']==line].groupby('ERROR_DESC')["TEST_LINE"].count().sort_values(ascending=False).to_json()
+    return jsonify(json.loads(line_fail_detail))  
 
 @bp.route('/gsa', methods=['GET', 'POST'])
 def gsa():
