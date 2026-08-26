@@ -175,17 +175,17 @@
         </thead>
         <tbody class="table-group-divider">
             <tr>
-                <td id="sub_cl">产量：</td>
-                <td id="sub_gs">工时：</td>
+                <td id="sub_cl">产量：{{data.data.product_qty_sub}}</td>
+                <td id="sub_gs">工时：{{data.data.qty_hr_sub}}</td>
                 <td><input type="text" placeholder="额外工时 " id="sub_ew" /></td>
                 <td id="sub_upph" class="up">
-                    <h5>UPPH:</h5><span></span>
+                    <h5>UPPH:{{data.data.upph_sub}}</h5><span></span>
                 </td>
-                <td id="tnb_cl">产量：</td>
-                <td id="tnb_gs">工时：</td>
+                <td id="tnb_cl">产量：{{data.data.product_qty_tnb}}</td>
+                <td id="tnb_gs">工时：{{data.data.qty_hr_tnb}}</td>
                 <td><input type="text" placeholder="额外工时" id="tnb_ew" /></td>
                 <td id="tnb_upph" class="up">
-                    <h5>UPPH:</h5><span></span>
+                    <h5>UPPH:{{data.data.upph_tnb}}</h5><span></span>
                 </td>
             </tr>
             <tr>

@@ -108,7 +108,7 @@
         const selectedRadio = document.querySelector('#radio_s');
         const tableBody = document.getElementById('dataTableBody');
         let timerId = null;
-        let n = 300;
+        let n = 120;
         // 监听radio按钮点击事件
         selectedRadio.addEventListener('click', (e) => {
             if (e) {
@@ -168,7 +168,7 @@
         // 渲染数据到页面
         function renderData(data) {
             tableBody.innerHTML = '';
-            for (let i = 0; i < 32; i++) {
+            for (let i = 0; i < Math.ceil(data.length/4); i++) {
                 // 创建行元素
                 var row = document.createElement('tr');
                 // 循环创建4列
@@ -229,7 +229,7 @@
             if (n <= 0) {
                 const checkedRadio = document.querySelector('input[name="selectDay"]:checked');
                 fetchData(checkedRadio.value);
-                n = 300;
+                n = 120;
             }
         }
         function qidongInterval() {

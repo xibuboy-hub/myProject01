@@ -10,6 +10,8 @@
 """
 import datetime
 import json
+import xml.etree.ElementTree as ET
+import re
 import requests
 from lxml import etree
 from flask import Blueprint, request, render_template, send_from_directory, jsonify, Response
@@ -97,7 +99,7 @@ def upph1():
             return jsonify({"code": 1, "data": {"message": str(e)}})
     # get请求为避免页面报错，发送初始数据填充
     data = mes_n.upph(1, 1, 'D')
-    return render_template('upph1.html', data=data)
+    return render_template('upph1.html')
 
 @bp.route('/upph2', methods=['GET', 'POST'])
 # @login_reguired
@@ -202,7 +204,7 @@ def checkStation():
         'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6,zh-CN;q=0.5',
         'Cache-Control': 'max-age=0',
         'Connection': 'keep-alive',
-        'Host': '10.128.128.120:9092',
+        'Host': '10.128.128.120:9092',# 10.114.64.200
         'Upgrade-Insecure-Requests': '1',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.58'
     }
@@ -235,6 +237,43 @@ def checkStation():
         return jsonify({'code': 1, 'data': {"station": resp_getstation.text, "bom": resp_getbom.text}})
     else:
         return jsonify({'code': 0, 'msg': '获取数据出错，请重试~'})
+
+@bp.route('/getbom', methods=['get','post'])
+def getbom():
+    headers = {
+        'Accept': 'text/html1,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6,zh-CN;q=0.5',
+        'Cache-Control': 'max-age=0',
+        'Connection': 'keep-alive',
+        'Host': '10.128.128.120:9092',# 10.114.64.200
+        'Upgrade-Insecure-Requests': '1',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.58'
+    }
+    sn = request.values.get('sn')
+    # sn="8107827800469"
+    params_getbom = {
+        'sn': sn,
+        'CUSTOMER': 'A31',
+        'SITE': 'CN53',
+        'LINE': 'I3FA31SUBK',
+        'GROUP': 'VIS',
+        'udf2': 'QT',
+        'udf3': 'GETBOM'
+    }
+    resp_getbom = requests.get(f'http://10.128.128.120:9092/FMDI/BASICVCI/BasicGetInfo.ashx', headers=headers,
+                               params=params_getbom)
+    if resp_getbom.status_code == 200:
+        # 1. 使用 XML 解析器获取根节点文本
+        root = ET.fromstring(resp_getbom.text)
+        content = root.text
+
+        # 2. 使用正则从文本中提取具体值
+        model = re.search(r'MODEL=(\S+)', content).group(1) if re.search(r'MODEL=(\S+)', content) else None
+        sku = re.search(r'SKU=(\S+)', content).group(1) if re.search(r'SKU=(\S+)', content) else None
+        return jsonify({"code": "1", "data": {"model":model, "sku":sku}})
+    else:
+        return jsonify({"code": 0, "msg": "获取数据出错，请重试~"})
 
 @bp.route('/card', methods=['GET', 'POST'])
 def card():

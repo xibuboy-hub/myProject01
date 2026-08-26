@@ -119,7 +119,7 @@ if __name__ == '__main__':
 
     # 添加定时任务：每天早上 8:00 执行
     # cron 表达式: hour=8, minute=0
-    scheduler.add_job(job, 'cron', hour=8, minute=0)
+    scheduler.add_job(job, 'cron', hour=15, minute=27)
 
     print("调度器已启动，等待每天早上8点推送天气...")
     print("按 Ctrl+C 退出")
