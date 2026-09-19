@@ -1,20 +1,9 @@
 document.getElementById('imageControl').addEventListener('click', () => {
-    document.getElementById('tableToExport').classList.toggle('h')
-})
-// 切换新旧版类型
-const selectedRadio = document.querySelector('#radio_type');
-// 监听选择类型按钮点击事件
-selectedRadio.addEventListener('click', (e) => {
-    if (e) {
-        console.log("选中的选项:", e.target.value);
-        get_upph_data(e.target.value)
-    } else {
-        console.log("用户未选择任何选项");
-    }
+	document.getElementById('tableToExport').classList.toggle('h')
 })
 function get_shift() {
     if (new Date().getHours() > 7 && new Date().getHours() < 20) {
-        $('input[name="shift"]:first').prop('checked', true);
+        $('input[type="radio"]:first').prop('checked', true);
         $('#area_sub').text('SUB白_UPPH')
         $('#area_tnb').text('TNB白_UPPH')
         // console.log('获取班别成功',$('input:radio:first')[0].checked)
@@ -24,6 +13,7 @@ function get_shift() {
         $('#area_tnb').text('TNB夜_UPPH')
     }
 }
+
 get_shift()
 const sub_em = document.querySelector('#sub_em')
 const tnb_em = document.querySelector('#tnb_em')
@@ -55,9 +45,6 @@ tnb_ew.addEventListener('blur', function () {
 //按钮解锁，输入框sub_em_Input获得焦点
 document.querySelector('#sub').addEventListener('click', function () {
     console.log('sub_em_Input获得了焦点');
-    $('input[name="selectType"]').each(function () {
-        $(this).prop('disabled', true);
-    })
     sub_em.disabled = false;
     sub_ew.disabled = false
     $('#btn')[0].disabled = false;
@@ -70,15 +57,11 @@ document.querySelector('#sub').addEventListener('click', function () {
 tnb_em.addEventListener('blur', function () {
     console.log('tnb_em_Input失去了焦点');
     tnb_em.disabled = true;
-    console.log('sub_em_Input获得了焦点');
     // 在这里执行你的代码，比如验证输入等
 });
 //按钮解锁，输入框tnb_em_Input获得焦点
 document.querySelector('#tnb').addEventListener('click', function () {
     console.log('tnb_em_Input获得了焦点');
-    $('input[name="selectType"]').each(function () {
-        $(this).prop('disabled', true);
-    })
     tnb_em.disabled = false;
     tnb_ew.disabled = false
     clearInterval(timerId)
@@ -138,7 +121,7 @@ function js() {
         // 弹窗提示产能差异
         alarm_detect();
         // 获取upph数据
-        get_upph_data($("input[name='selectType']:checked").val());
+        get_upph_data();
     }
     if (n < 3) {
         n = 12;
@@ -146,18 +129,14 @@ function js() {
 }
 
 function qidongInterval() {
-    get_upph_data($("input[name='selectType']:checked").val());
-    // $('input[name="selectType"]:first').prop('disabled', false)
-    $('input[name="selectType"]').each(function () {
-        $(this).prop('disabled', false);
-    })
+    get_upph_data();
     $('#btn')[0].disabled = true;
     $('#btn')[0].classList.toggle('btn-secondary')
     timerId = setInterval(js, 1000)
 }
 
 //发送异步请求获取数据
-function get_upph_data(select_type) {
+function get_upph_data() {
     // get_shift()
     localStorage.setItem('sub_hr', sub_em.value || 1)
     localStorage.setItem('tnb_hr', tnb_em.value || 1)
@@ -175,8 +154,8 @@ function get_upph_data(select_type) {
     //console.log(sub_em.value,tnb_em.value)
     fetch('/other/upph1', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ "encrypted": encrypted, "st": Date.now(), "sign": parseInt(Math.random() * 10), "select_type": select_type }),
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({"encrypted": encrypted, "st": Date.now(), "sign": parseInt(Math.random() * 10)}),
     })
         .then((res) => {
             if (res.url.indexOf('other/upph1') !== -1) {
@@ -187,74 +166,24 @@ function get_upph_data(select_type) {
 
         })
         .then((data) => {
-
             if (data.code === 0) {
                 //测试打印数据到控制台
                 // console.log(data);
                 let sub_qty_hr, tnb_qty_hr, sub_upph, tnb_upph
                 $('#sub_ew').val() === '' ? sub_qty_hr = data.data.qty_hr_sub : sub_qty_hr = (data.data.qty_hr_sub + parseFloat($('#sub_ew').val())).toFixed(2)
                 $('#tnb_ew').val() === '' ? tnb_qty_hr = data.data.qty_hr_tnb : tnb_qty_hr = (data.data.qty_hr_tnb + parseFloat($('#tnb_ew').val())).toFixed(2)
-                if (data.select_type == "all") {
-                    const goal = 2.44;
-                    $('#sub_ew').val() === '' ? sub_upph = (data.data.product_qty_sub * 0.3 / data.data.qty_hr_sub).toFixed(2) : sub_upph = (data.data.product_qty_sub * 0.3 / sub_qty_hr).toFixed(2)
-                    $('#tnb_ew').val() === '' ? tnb_upph = (data.data.product_qty_tnb * 0.3 / data.data.qty_hr_tnb).toFixed(2) : tnb_upph = (data.data.product_qty_tnb * 0.3 / tnb_qty_hr).toFixed(2)
-                    $('#sub_upph').text(`UPPH:${sub_upph}-${(sub_upph / goal * 100).toFixed(2)}%`)
-                    $('#tnb_upph').text(`UPPH:${tnb_upph}-${(tnb_upph / goal * 100).toFixed(2)}%`)
-                    // 变色提醒
-                    if (parseFloat($('#sub_upph')[0].innerText.split(':')[1]) > goal) {
-                        $('#sub_upph')[0].classList.add('up1')
-                    } else if (parseFloat($('#sub_upph')[0].innerText.split(':')[1].split('-')[0]) > goal * 0.9) {
-                        $('#sub_upph')[0].classList.add('goal')
-                        $('#sub_upph')[0].classList.remove('up1')
 
-                    } else {
-                        $('#sub_upph')[0].classList.remove('goal')
-                        $('#sub_upph')[0].classList.remove('up1')
-                    }
-                    if (parseFloat($('#tnb_upph')[0].innerText.split(':')[1]) > goal) {
-                        $('#tnb_upph')[0].classList.add('up1')
-                    } else if (parseFloat($('#tnb_upph')[0].innerText.split(':')[1].split('-')[0]) > goal * 0.9) {
-                        $('#tnb_upph')[0].classList.add('goal')
-                        $('#tnb_upph')[0].classList.remove('up1')
-                    } else {
-                        $('#tnb_upph')[0].classList.remove('up1')
-                        $('#tnb_upph')[0].classList.remove('goal')
-                    }
-                } else {
-                    const sub_goal = 9.21;
-                    const tnb_goal = 10.85;
-                    $('#sub_ew').val() === '' ? sub_upph = (data.data.product_qty_sub / data.data.qty_hr_sub).toFixed(2) : sub_upph = (data.data.product_qty_sub / sub_qty_hr).toFixed(2)
-                    $('#tnb_ew').val() === '' ? tnb_upph = (data.data.product_qty_tnb / data.data.qty_hr_tnb).toFixed(2) : tnb_upph = (data.data.product_qty_tnb / tnb_qty_hr).toFixed(2)
-                    $('#sub_upph').text(`UPPH:${sub_upph}-${(sub_upph / sub_goal * 100).toFixed(2)}%`)
-                    $('#tnb_upph').text(`UPPH:${tnb_upph}-${(tnb_upph / tnb_goal * 100).toFixed(2)}%`)
-                    // 变色提醒
-                    if (parseFloat($('#sub_upph')[0].innerText.split(':')[1]) > sub_goal) {
-                        $('#sub_upph')[0].classList.add('up1')
-                    } else if (parseFloat($('#sub_upph')[0].innerText.split(':')[1].split('-')[0]) > sub_goal * 0.9) {
-                        $('#sub_upph')[0].classList.add('goal')
-                        $('#sub_upph')[0].classList.remove('up1')
+                $('#sub_ew').val() === '' ? sub_upph = (data.data.product_qty_sub / data.data.qty_hr_sub).toFixed(2) : sub_upph = (data.data.product_qty_sub / sub_qty_hr).toFixed(2)
+                $('#tnb_ew').val() === '' ? tnb_upph = (data.data.product_qty_tnb / data.data.qty_hr_tnb).toFixed(2) : tnb_upph = (data.data.product_qty_tnb / tnb_qty_hr).toFixed(2)
 
-                    } else {
-                        $('#sub_upph')[0].classList.remove('goal')
-                        $('#sub_upph')[0].classList.remove('up1')
-                    }
-                    if (parseFloat($('#tnb_upph')[0].innerText.split(':')[1]) > tnb_goal) {
-                        $('#tnb_upph')[0].classList.add('up1')
-                    } else if (parseFloat($('#tnb_upph')[0].innerText.split(':')[1].split('-')[0]) > tnb_goal * 0.9) {
-                        $('#tnb_upph')[0].classList.add('goal')
-                        $('#tnb_upph')[0].classList.remove('up1')
-                    } else {
-                        $('#tnb_upph')[0].classList.remove('up1')
-                        $('#tnb_upph')[0].classList.remove('goal')
-                    }
-                }
+
                 $('#sub_cl').text(`产量:${data.data.product_qty_sub}`)
                 $('#sub_gs').text(`工时:${sub_qty_hr}`)
-                // $('#sub_upph').text(`UPPH:${sub_upph}-${(sub_upph / goal * 100).toFixed(2)}%`)
+                $('#sub_upph').text(`UPPH:${sub_upph}-${(sub_upph / 9.21 * 100).toFixed(2)}%`)
                 // $('#sub_upph').text(`UPPH:${sub_upph}`)
                 $('#tnb_cl').text(`产量:${data.data.product_qty_tnb}`)
                 $('#tnb_gs').text(`工时:${tnb_qty_hr}`)
-                // $('#tnb_upph').text(`UPPH:${tnb_upph}-${(tnb_upph / goal * 100).toFixed(2)}%`)
+                $('#tnb_upph').text(`UPPH:${tnb_upph}-${(tnb_upph / 10.85 * 100).toFixed(2)}%`)
                 // $('#tnb_upph').text(`UPPH:${tnb_upph}`)
                 // $('#sub_upph').text(`UPPH:${sub_upph}`)
                 // $('#tnb_upph').text(`UPPH:${tnb_upph}`)
@@ -282,7 +211,26 @@ function get_upph_data(select_type) {
                 //         document.getElementById('yibiaopan').style.display = 'flex';
                 //     }
                 // })
+                // 变色提醒
+                if (parseFloat($('#sub_upph')[0].innerText.split(':')[1]) > 9.21) {
+                    $('#sub_upph')[0].classList.add('up1')
+                } else if (parseFloat($('#sub_upph')[0].innerText.split(':')[1].split('-')[0]) > 9.21 * 0.9) {
+                    $('#sub_upph')[0].classList.add('goal')
+                    $('#sub_upph')[0].classList.remove('up1')
 
+                } else {
+                    $('#sub_upph')[0].classList.remove('goal')
+                    $('#sub_upph')[0].classList.remove('up1')
+                }
+                if (parseFloat($('#tnb_upph')[0].innerText.split(':')[1]) > 10.86) {
+                    $('#tnb_upph')[0].classList.add('up1')
+                } else if (parseFloat($('#tnb_upph')[0].innerText.split(':')[1].split('-')[0]) > 10.86 * 0.9) {
+                    $('#tnb_upph')[0].classList.add('goal')
+                    $('#tnb_upph')[0].classList.remove('up1')
+                } else {
+                    $('#tnb_upph')[0].classList.remove('up1')
+                    $('#tnb_upph')[0].classList.remove('goal')
+                }
                 render(data.data.qty_data_list)
                 // 显示下方趋势图
                 // show_upph_to_html(data);
@@ -300,7 +248,7 @@ function get_upph_data(select_type) {
 // 刷新按钮事件
 $("#refresh").click(() => {
     alert("开始手动刷新！")
-    get_upph_data($("input[name='selectType']:checked").val())
+    get_upph_data()
 })
 
 // 异步添加数据至数据库
@@ -313,7 +261,7 @@ function add_upph() {
             "u_tnb": parseFloat($('#tnb_upph')[0].innerText.split(':')[1])
         }
         fetch('/other/add_upph', {
-            method: 'POST', body: JsonStringfy(data), headers: { ContentType: 'application/json' }
+            method: 'POST', body: JsonStringfy(data), headers: {ContentType: 'application/json'}
         }).then(response => response.json()).then((data) => {
             console.log(data, '恭喜你，添加数据成功！')
         }).catch((error) => {

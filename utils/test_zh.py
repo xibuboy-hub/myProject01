@@ -79,7 +79,7 @@ def excel2mysql(path: str, table: str) -> None:
     excel_file = path
     df = pd.read_excel(excel_file)
     # 创建数据库连接字符串
-    database_connection = 'mysql+mysqlconnector://root:root123@10.129.116.144:3306/l3_fixture_management'
+    database_connection = 'mysql+pymysql://root:root123@10.129.116.144:3306/l3_fixture_management'
     engine = create_engine(database_connection)
     df.to_sql(table, con=engine, if_exists='append', index=False)
     print('over')
@@ -89,14 +89,14 @@ def mysql2excel():
     from sqlalchemy import create_engine
 
     # 创建数据库连接引擎
-    engine = create_engine('mysql+pymysql://root:root123@localhost/test')
+    engine = create_engine('mysql+pymysql://root:root123@10.129.116.144:3306/l3_fixture_management')
 
     # 读取数据
-    query = "SELECT * FROM power_list"
+    query = "SELECT * FROM type_51"
     df = pd.read_sql(query, engine)
 
     # 导出到Excel文件
-    df.to_excel('c:/users/joy_lo/desktop/lx_power_list.xlsx', index=False)
+    df.to_excel('c:/users/joy_lo/desktop/type_51.xlsx', index=False)
 
 
 if __name__ == '__main__':
@@ -109,6 +109,6 @@ if __name__ == '__main__':
     # print(a, b, c)
     # ac.execute_sql('drop table user')
     # excel2sqlite3()
-    table = 'lx_test_fixture'
+    table = 'type_51'
     excel2mysql(f'c:/users/joy_lo/desktop/{table}.xlsx', table)
     # mysql2excel()

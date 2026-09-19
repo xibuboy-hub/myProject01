@@ -72,11 +72,14 @@ def a_upph():
         return jsonify({"status": "error", "message": str(e)}), 400
 
 # 参数加密测试
+
 @bp.route('/upph1', methods=['GET', 'POST'])
 # @login_reguired
 def upph1():
+    #return "<h1>网站维护中...</h1>"
     if request.method == 'POST':
         encrypted_str = request.get_json().get('encrypted')
+        select_type = request.get_json().get('select_type')
         # 处理前端加密数据
         aes = aes_decrypt()
         key = 'qazwsxedcrfvtgby'
@@ -90,7 +93,7 @@ def upph1():
                 'shift': request_data.get('shift')
             }
             # 获取upph并返回到前端页面
-            upph = mes_n.upph(int(data_hr.get('sub_hr')), int(data_hr.get('tnb_hr')), shift=data_hr['shift'])
+            upph = mes_n.upph(int(data_hr.get('sub_hr')), int(data_hr.get('tnb_hr')), shift=data_hr['shift'],select_type=select_type)
             # 每次更新页面前执行添加数据库动作，函数内部判断是否为指定时间
             # add_upph(upph)
             # 返回查询数据
@@ -164,8 +167,8 @@ def fail_detail():
     line=request.get_json().get('line','')
     df = pd.read_excel("D:/Program Files (x86)/web/211.xls", engine="xlrd")
     due_fail_groupby=df.groupby(["TEST_LINE",'ERROR_DESC'])["TEST_LINE"].count()
-    line_fail_detail=df.loc[df['TEST_LINE']==line].groupby('ERROR_DESC')["TEST_LINE"].count().sort_values(ascending=False).to_json()
-    return jsonify(json.loads(line_fail_detail))  
+    line_fail_detail=df.loc[df['TEST_LINE']==line].groupby(['MODEL_NAME','ERROR_DESC'])["TEST_LINE"].count().sort_values(ascending=False).reset_index().to_dict(orient="records")
+    return jsonify(line_fail_detail)
 
 @bp.route('/gsa', methods=['GET', 'POST'])
 def gsa():

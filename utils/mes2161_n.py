@@ -73,7 +73,7 @@ def qty_hr1(em: int, shift: str) -> float:
     return qty_hr
 
 
-def upph(sub_em: int, tnb_em: int, shift: str) -> dict:
+def upph(sub_em: int, tnb_em: int, shift: str,select_type:str='all') -> dict:
     """
     获取实际的UPPH
     :param shift: 班别
@@ -86,7 +86,7 @@ def upph(sub_em: int, tnb_em: int, shift: str) -> dict:
     # print(f'当前SUB总工时为：{qty_hr_sub}')
     # print(f'当前TNB总工时为：{qty_hr_tnb}')
     try:
-        qty = qcm(shift)
+        qty = qcm(shift,select_type)
         upph_sub = round(qty['SUB'] / qty_hr_sub, 2)
         upph_tnb = round(qty['K3FA31TNB'] / qty_hr_tnb, 2)
         if upph:
@@ -101,7 +101,7 @@ def upph(sub_em: int, tnb_em: int, shift: str) -> dict:
                 'qty_data_list': qty['data']
             }
             # print(f'{line}:', data)
-            return {"code": 0, "data": data}
+            return {"code": 0, "data": data,"select_type":select_type}
         else:
             # 这里是错误的
             data = {
@@ -113,12 +113,12 @@ def upph(sub_em: int, tnb_em: int, shift: str) -> dict:
                 'upph_tnb': upph_tnb,
                 'qty_data_list': qty['data']
             }
-            return {"code": 1, "data": data}
+            return {"code": 1, "data": data,"select_type":select_type}
     except Exception as e:
         return {"code": 1, "error": f"数据出错,加速修复中。。。 {e}"}
 
 
-def qcm(shift: str) -> Union[int, any]:
+def qcm(shift: str,select_type:str='all') -> Union[int, any]:
     """
     通过线体获取实际产量
     :param shift: 班别
@@ -246,15 +246,27 @@ def qcm(shift: str) -> Union[int, any]:
             continue
         s = 0
         t = 0
-        for item in data:
-            for k, v in item.items():
-                if "SUB" in k:
-                    s += int(v)
-                elif "K3FA31TNB" in k and "K3FA31TNBP" not in k:
-                    t += int(v)
-                else:
-                    pass
-        return {"code": 0, "SUB": s, "K3FA31TNB": t, 'data': data}
+        if select_type=='all':
+            for item in data:
+                for k, v in item.items():
+                    if "SUB" in k:
+                        s += int(v)
+                    elif "K3FA31TNB" in k:
+                    # and "K3FA31TNBP" not in k 排除K3FA31TNBP产量
+                        t += int(v)
+                    else:
+                        pass
+            return {"code": 0, "SUB": s, "K3FA31TNB": t, 'data': data}
+        else:
+            for item in data:
+                for k, v in item.items():
+                    if "SUB" in k:
+                        s += int(v)
+                    elif "K3FA31TNB" in k and "K3FA31TNBP" not in k:# 排除K3FA31TNBP产量
+                        t += int(v)
+                    else:
+                        pass
+            return {"code": 0, "SUB": s, "K3FA31TNB": t, 'data': data}
     except Exception as e:
         return {"code": 1, "msg": f"获取数据出错,正在努力修复中{str(e)}"}
 

@@ -38,7 +38,8 @@ def create_app():
     app.config.from_object(ProductionConfig)
     app.secret_key = 'aswycbdjddjdueekejhb'
     app.config['PERMANENT_SESSION_LIFETIME'] = 60 * 60 * 12
-    cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # 可以使用其他类型的缓存，如Redis
+    cache = Cache(app, config={'CACHE_TYPE': 'RedisCache'})  # 可以使用其他类型的缓存，如Redis
+    cache.init_app(app)
 
     app.register_blueprint(index_bp)
     #app.register_blueprint(image_bp)
@@ -56,9 +57,10 @@ def create_app():
     #app.register_blueprint(api_contact_bp)
 
     # 配置文件上传目录
-    UPLOAD_FOLDER = 'uploads'
-    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    # UPLOAD_FOLDER = 'uploads'
+    # app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    app.config['UPLOAD_FOLDER'] = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../uploads')
+    os.makedirs(os.path.join(os.path.abspath(os.path.dirname(__file__)), '../uploads'), exist_ok=True)
     # 配置静态文件路径，使浏览器能访问上传的图片
     app.config['UPLOAD_URL'] = '../uploads'
     return app

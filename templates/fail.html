@@ -79,14 +79,15 @@
 </head>
 
 <body style="width: 80%;margin: 0 auto;">
-    <dialog id="fail_detail" style="border-radius: 10px;border: none;width: 300px;">
+    <dialog id="fail_detail" style="border-radius: 10px;border: none;width: 500px;">
         <table id="table" style="width: 100%; border-collapse: collapse; text-align: center;">
             <span style="text-align: right;margin:5px 2px;"><input type="button" value="X"
                     onclick="document.getElementById('fail_detail').close();"></span>
             <caption>不良明细</caption>
             <thead>
-                <th>Line</th>
-                <th>Fail qty</th>
+                <th>MODEL_NAME</th>
+                <th>ERROR_DESC</th>
+                <th>FAIL_QTY</th>
             </thead>
             <tbody id="tbody">
             </tbody>
@@ -145,6 +146,9 @@
                     body: JSON.stringify({ line: line })
                 });
                 // 处理数据，排序
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
                 const originalArray = await response.json();
                 let data = [...originalArray].sort();
                 // 计算总和
@@ -163,6 +167,8 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
+                alert('获取数据失败，请稍后再试。');
+                return
             }
         }
         // 渲染数据到页面
@@ -245,16 +251,15 @@
             var fail_detail = await get_fail_detail(line);
             // console.log(Object.keys(fail_detail).length);
             // 将对象转换为键值对数组并排序
-            let sortedEntries = Object.entries(fail_detail).sort((a, b) => b[1] - a[1]);
+            //let sortedEntries = Object.entries(fail_detail).sort((a, b) => b[1] - a[1]);
             // 如果你需要结果是一个对象的形式，可以这样转换
-            fail_detail = Object.fromEntries(sortedEntries);
-            for (let key in fail_detail) {
-                if (fail_detail.hasOwnProperty(key)) {
-                    var tr = document.createElement("tr");
-                    tr.innerHTML = `<td style="text-align:center;">${key}</td><td style="text-align:center;">${fail_detail[key]}</td>`;
-                    tbody.appendChild(tr);
-                }
-            }
+            //fail_detail = Object.fromEntries(sortedEntries);
+            fail_detail.forEach(item => {
+                let tr = document.createElement('tr');
+                // console.log(Object.keys(item).length);
+                tr.innerHTML = `<td style="text-align:center;">${item.MODEL_NAME}</td><td style="text-align:center;">${item.ERROR_DESC}</td><td style="text-align:center;">${item.TEST_LINE}</td>`;
+                tbody.appendChild(tr);
+            });
         }
         async function get_fail_detail(line) {
             const data = await fetch(`http://joy_lo:8083/other/line_fail`, {
@@ -262,6 +267,9 @@
                 headers: { "content-type": "application/json" },
                 body: JSON.stringify({ line: line })
             });
+            if (!data.ok) {
+                throw new Error(`HTTP error! status: ${data.status}`);
+            }
             const fail_detail = await data.json();
             return fail_detail;
         }

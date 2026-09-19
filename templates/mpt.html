@@ -2,6 +2,7 @@
 {% block title %}MPT异常查询{% endblock %}
 {% block content %}
 <h3 class="container panel-heading">MPT异常查询</h3>
+    <script src="{{ url_for('static',filename='js/jquery.min.js')}}"></script>
 <script src="{{ url_for('static',filename='js/xlsx.full.min.js')}}"></script>
 <script src="{{ url_for('static',filename='js/FileSaver.min.js')}}"></script>
 <style>
@@ -76,9 +77,6 @@
         color: red !important;
         font-weight: bold;
     }
-    .tel{
-        cursor: pointer;
-    }
 </style>
 <div class="container">
     <!--    <textarea id="txt"></textarea>-->
@@ -88,20 +86,21 @@
         <select id="p">
             <option value="sub">SUB</option>
             <option value="tnb">TNB</option>
-        </select></p>
+        </select>
+    </p>
     <span id="hs" style="text-align: right;font-size: small;font-weight:bold;float: right;"></span>
     <table id="tableToExport">
         <thead>
-        <tr>
-            <th>NO.</th>
-            <th>线别</th>
-            <th>姓名</th>
-            <th>工号</th>
-            <th>上班卡</th>
-            <th>线别卡</th>
-            <th>电话</th>
-            <th>下班卡</th>
-        </tr>
+            <tr>
+                <th>NO.</th>
+                <th>线别</th>
+                <th>姓名</th>
+                <th>工号</th>
+                <th>上班卡</th>
+                <th>线别卡</th>
+                <th>电话</th>
+                <th>下班卡</th>
+            </tr>
         </thead>
         <tbody id="tbody">
         </tbody>
@@ -110,9 +109,23 @@
 <script>
     const tbody = document.getElementById('tbody')
     const search_btn = document.getElementById('search')
+    //点击显示完整号码
+    function getFullPhone() {
+        // 假设表格已渲染，每个电话单元格有一个 data-full-phone 属性存储完整号码
+        // HTML 示例: <td class="phone-cell" data-full-phone="13800138000">138&zwnj;****&zwnj;1234</td>
+        document.querySelectorAll('.tel').forEach(cell => {
+            cell.style.cursor = 'pointer';
+            cell.addEventListener('click', function () {
+                const fullPhone = this.getAttribute('data-full-phone');
+                // console.log('点击了电话号码：', fullPhone);
+                const currentText = this.innerText;
 
-    // const tds = document.querySelectorAll('td');
-
+                // 简单判断：如果当前是脱敏的，就显示完整的；反之亦然
+                currentText.includes('****') ? this.innerText = fullPhone : this.innerHTML = fullPhone.replace(/(\d{3})\d{4}(\d{4})/, '$1&zwnj;****&zwnj;$2');
+            });
+        });
+    }
+    //修改文字颜色
     function colorFont() {
         const tds = document.querySelectorAll('td');
         tds.forEach(function (td) {
@@ -132,17 +145,11 @@
         data.forEach((e) => {
             const tr = document.createElement('tr')
             num++;
-            tr.innerHTML = `<td>${num}</td><td>${e[0]}</td><td>${e[1]}</td><td>${e[2]}</td><td>${e[4]}</td><td>${e[6]}</td><td class="tel" title="点击显示完整号码">${e[7].slice(0, 3) + '****' + e[7].slice(-4)}</td><td>${e[8]}</td>`
+            tr.innerHTML = `<td>${num}</td><td>${e[0]}</td><td>${e[1]}</td><td>${e[2]}</td><td>${e[4]}</td><td>${e[6]}</td><td class="tel" data-full-phone="${e[7]}">${e[7].replace(/(\d{3})\d{4}(\d{4})/, '$1&zwnj;****&zwnj;$2')}</td><td>${e[8]}</td>`
             tbody.appendChild(tr)
-            document.querySelectorAll(".tel").forEach((item)=>{
-                item.onclick = function(){
-                    item.innerHTML.includes('****')?item.innerHTML = `${e[7]}`:item.innerHTML =`${e[7].slice(0, 3) + '****' + e[7].slice(-4)}`
-                }
-            })
         })
         return num;
     }
-
     function countHr(data) {
         // 统计人数
         const countMap = {};
@@ -178,7 +185,7 @@
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({'p': document.getElementById('p').value})
+            body: JSON.stringify({ 'p': document.getElementById('p').value })
         }).then(res => {
             if (!res.ok) {
                 throw new Error('Network response was not ok');
@@ -190,6 +197,7 @@
             let e = Date.now()
             render(data.data)
             colorFont();
+            getFullPhone();
             $('#hs')[0].innerHTML = `本次登录用户:<span style="color: blue;">${data.username}</span>,【${data.qty}个人加班】` + '查询到记录' + $("table tbody tr").length + '条，总耗时' + (e - s) / 1000 + '秒';
         }).catch((error) => {
             search_btn.value = 'Query'
@@ -203,10 +211,10 @@
     function exportTableToExcel() {
         // 获取表格元素
         const table = document.getElementById('tableToExport');
-        const wb = XLSX.utils.table_to_book(table, {sheet: "Sheet1"});
+        const wb = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
         const ws = wb.Sheets['Sheet1']
         setCellFormatAsText(ws, 2)
-        const wbout = XLSX.write(wb, {bookType: 'xlsx', type: 'binary'});
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
 
         function s2ab(s) {
             const buf = new ArrayBuffer(s.length); //convert s to arrayBuffer
@@ -216,14 +224,14 @@
         }
 
         let name = new Date().getTime()
-        saveAs(new Blob([s2ab(wbout)], {type: "application/octet-stream"}), `mpt_data_${name}.xlsx`); //使用FileSaver.js保存文件
+        saveAs(new Blob([s2ab(wbout)], { type: "application/octet-stream" }), `mpt_data_${name}.xlsx`); //使用FileSaver.js保存文件
     }
 
     // 修改某一列为文本格式
     function setCellFormatAsText(ws, col) {
         var range = XLSX.utils.decode_range(ws['!ref']); // 获取工作表的范围
         for (var R = range.s.r; R <= range.e.r; ++R) { // 遍历行
-            var cell_address = {c: col, r: R}; // 设置列和行
+            var cell_address = { c: col, r: R }; // 设置列和行
             var cell_reference = XLSX.utils.encode_cell(cell_address); // 编码单元格地址
             if (!ws[cell_reference]) continue; // 如果单元格不存在，则跳过
             ws[cell_reference].t = 's'; // 设置单元格类型为字符串（文本）

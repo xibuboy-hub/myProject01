@@ -138,15 +138,52 @@
         width: 13px;
         height: 13px;
     }
+    /* 1. 设置 p 元素为相对定位，作为标识的定位基准 */
+    #radio_type {
+        position: relative;
+        border-radius:0 5px 5px 5px;
+        padding: 5px 8px;
+        box-shadow: inset 0px 0px 1px 1px #01bc49;
+    }
+    /* 2. 使用伪元素创建热点标识 */
+    #radio_type::before {
+        content: "New";
+        /* 标识文字 */
+        position: absolute;
+        top: 0px;
+        left: -38px;
+        /* 或 right: 0 放在右上角 */
+        /* 样式美化 */
+        background-color: #01bc49;
+        color: #fff;
+        font-size: 12px;
+        line-height: 20px;
+        padding: 0 6px;
+        border-radius: 4px 0 0 4px;
+        /* 右下角圆角，根据位置调整 */
+        z-index: 1;
+        /* 确保在文字上方 */
+    }
+
 </style>
+    <script src="{{ url_for('static',filename='js/jquery.min.js')}}"></script>
+    <script src="{{ url_for('static',filename='js/crypto-js.js')}}"></script>
 <div class="container">
     <table class="table table-sm">
         <thead>
             <tr>
-                <th colspan="4">
+                <th colspan="3">
                     <h5 id="area_sub">SUB白_UPPH</h5>
                 </th>
-                <th colspan="4">
+                <th colspan="2">
+                    <div id="radio_type"><span>选择类型:</span>
+                        <label style="padding:0 10px;"><input type="radio" name="selectType" value="all" checked
+                                disabled>新版</label>
+                        <label style="padding:0 10px;"><input type="radio" name="selectType" value="qa"
+                                disabled>旧版</label>
+                    </div>
+                </th>
+                <th colspan="3">
                     <h5 id="area_tnb">TNB白_UPPH</h5>
                 </th>
             </tr>
@@ -226,7 +263,7 @@
     <!--    </div>-->
 </div>
 <script>
-    const date_list = ['5/12', '7/28', '12/13']
+    const date_list = ['5/12', '7/28', '9/18', '12/13']
     const today_date = new Date().toLocaleDateString().split('/').slice(1, 3).join('/')
     // if (date_list.includes(today_date)) {
     //     document.querySelector('html').style.filter = 'grayscale(1)'
@@ -234,14 +271,15 @@
     const today_events = [
         { date: "5/12", event: "‌2008 年汶川特大地震‌：5 月 12 日 14 时 28 分，四川汶川发生里氏 8.0 级地震，是新中国成立以来破坏性最强、波及范围最广的地震，遇难及失踪超 8.7 万人 。为纪念这一事件，‌2009 年起每年 5 月 12 日设为全国防灾减灾日‌。" },
         { date: "7/28", event: "唐山大地震50周年祭‌：2026年7月28日正好是1976年唐山大地震发生50周年，当年凌晨3时42分，河北唐山发生7.8级强烈地震，造成24.2万多人遇难 。" },
-        { date: "12/13", event: "南京大屠杀是二战期间最严重的战争罪行之一。1985年，侵华日军南京大屠杀遇难同胞纪念馆建成；2014年，我国设立每年12月13日为“南京大屠杀死难者国家公祭日”。"}
+        { date: "12/13", event: "南京大屠杀是二战期间最严重的战争罪行之一。1985年，侵华日军南京大屠杀遇难同胞纪念馆建成；2014年，我国设立每年12月13日为“南京大屠杀死难者国家公祭日”。" },
+        { date: '9/18', event: "9.18九一八事变纪念日|勿忘国耻 铭记历史--1.1931年~1945年，大半中国被日军践踏，930余座城市被侵占，4200万难民无家可归;2.日军制造的800名以上平民伤亡惨案达173件，造成3500多万同胞伤亡;3.中国妇女被日军掳走充当慰安妇在20万人以上;4.中国平民被日军掳走运往日本做劳工的在4万人以上，近7000人死在日本;5.日军从中国掠走资源：钢铁3350万吨、煤炭5.86亿吨." }
     ]
     function get_event() {
         let event = today_events.find(item => item.date === today_date)
         if (event) {
             document.querySelector('table').parentNode.insertBefore(document.createElement("marquee"), document.querySelector('table'));
             document.querySelector('html').style.filter = 'grayscale(1)'
-            document.querySelector('marquee').innerHTML = "铭记历史:"+event.event
+            document.querySelector('marquee').innerHTML = "铭记历史:" + event.event
         }
     }
     get_event()
